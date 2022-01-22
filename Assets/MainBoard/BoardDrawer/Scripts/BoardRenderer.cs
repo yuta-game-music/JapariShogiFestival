@@ -12,7 +12,7 @@ namespace JSF.Game.Board
         public GameObject RowPrefab;
         public GameObject CellPrefab;
 
-        public BoardManager BoardManager;
+        public GameManager BoardManager;
 
         private RectTransform tf;
 

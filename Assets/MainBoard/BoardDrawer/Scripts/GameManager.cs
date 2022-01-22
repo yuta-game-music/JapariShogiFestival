@@ -2,17 +2,30 @@ using JSF.Database;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using JSF.Game.UI;
 
 namespace JSF.Game.Board
 {
-    public class BoardManager : MonoBehaviour
+    public class GameManager : MonoBehaviour
     {
         public GameObject FriendOnBoardPrefab;
+
+        public Player.Player[] Players;
+
+        public Player.Player PlayerInTurn;
 
         public Dictionary<Vector2Int, Cell> Map { get; private set; } = new Dictionary<Vector2Int, Cell>();
         public Dictionary<Vector2Int, FriendOnBoard> Friends { get; private set; } = new Dictionary<Vector2Int, FriendOnBoard>();
 
+        public GameUI GameUI;
         public BoardRenderer BoardRenderer;
+
+        public Transform EffectObject;
+
+        public void Start()
+        {
+
+        }
 
         private void Update()
         {
@@ -31,9 +44,11 @@ namespace JSF.Game.Board
                     friendOnBoardObject.transform.localPosition = Vector3.zero;
                     FriendOnBoard friendOnBoard = friendOnBoardObject.GetComponent<FriendOnBoard>();
                     friendOnBoard.Friend = friend;
-                    friendOnBoard.MoveToCell(Cell.SelfPos);
+                    friendOnBoard.MoveToCell(Cell);
+                    friendOnBoard.SetDir(dir);
 
                     Cell.Friends = friendOnBoard;
+                    Debug.Log("Placed friend " + friendOnBoard.Friend.Name + ": " + pos +" rot="+dir.ToString());
 
                     return true;
                 }
@@ -51,22 +66,31 @@ namespace JSF.Game.Board
         }
         public bool MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to)
         {
-            if(Map.TryGetValue(friendOnBoard.Pos, out Cell cell_from))
+            if (Map.TryGetValue(to, out Cell cell_to))
             {
-                if(Map.TryGetValue(to, out Cell cell_to))
+                return MoveFriend(friendOnBoard, cell_to);
+            }
+            else
+            {
+                Debug.LogError("No such coordinate: " + to);
+            }
+            return false;
+        }
+        public bool MoveFriend(FriendOnBoard friendOnBoard, Cell cell_to)
+        {
+            if (Map.TryGetValue(friendOnBoard.Pos, out Cell cell_from))
+            {
+                if (cell_to.Friends != null)
                 {
-                    cell_from.Friends = null;
-                    friendOnBoard.MoveToCell(to);
-                    cell_to.Friends = friendOnBoard;
-                    friendOnBoard.transform.SetParent(cell_to.transform, false);
-                    friendOnBoard.transform.localPosition = Vector3.zero;
-                    Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
-                    return true;
+                    cell_to.Friends.GoToLounge(Players[0]);
                 }
-                else
-                {
-                    Debug.LogError("No such coordinate: " + to);
-                }
+                cell_from.Friends = null;
+                friendOnBoard.MoveToCell(cell_to);
+                cell_to.Friends = friendOnBoard;
+                friendOnBoard.transform.SetParent(cell_to.transform, false);
+                friendOnBoard.transform.localPosition = Vector3.zero;
+                Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
+                return true;
             }
             else
             {
