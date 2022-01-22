@@ -8,6 +8,8 @@ public static class PositionUtil
     // Circle(r)において、(0,r)から左回りにs回移動した地点をP(r,s)とし、P(r,s)=vecとなるsを求める
     public static void CalcCirclePos(Vector2Int vec, out int r, out int circle_pos)
     {
+        // 原点の場合は0とする
+        if (vec == Vector2Int.zero) { r = 0; circle_pos = 0; return; }
         // 点(x,y)について以下の式でr(x,y)を計算する
         r = Mathf.Max(Mathf.Abs(vec.x), Mathf.Abs(vec.y));
         // Circle(R)を「r(x,y)=Rとなるx,yの集合からなる正方形の淵」とする
@@ -15,7 +17,7 @@ public static class PositionUtil
 
         if (vec.y == r)
         {
-            circle_pos = (vec.x + 8 * r) % (8 * r);
+            circle_pos = (-vec.x + 8 * r) % (8 * r);
         }
         else if (vec.x == -r)
         {
@@ -33,6 +35,9 @@ public static class PositionUtil
     }
     public static Vector2Int CalcVectorFromCirclePos(int r, int circle_pos)
     {
+        // r=0の場合は原点とする
+        if (r==0) { return Vector2Int.zero; }
+
         // R(x,y)=rとなる格子点の数
         int R = 8 * r;
 
