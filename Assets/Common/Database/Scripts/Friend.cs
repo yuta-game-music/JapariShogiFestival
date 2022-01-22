@@ -13,11 +13,13 @@ namespace JSF.Database
         public abstract Dictionary<Vector2,MovementSettings> GetMovementSheet();
         public virtual IEnumerator MoveNormal(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard)
         {
-            friendsOnBoard.Animator.SetBool("MoveForward", true);
+            var animation_name = (RotationDirectionUtil.IsStraight(friendsOnBoard.Dir)) ? "MoveForward" : "MoveForward1.41";
+            
+            friendsOnBoard.Animator.SetBool(animation_name, true);
             int layer_id = friendsOnBoard.Animator.GetLayerIndex("Movement");
             yield return new WaitUntil(() => friendsOnBoard.Animator.GetCurrentAnimatorStateInfo(layer_id).IsName("WaitingForControl"));
-            friendsOnBoard.BoardManager.MoveFriend(friendsOnBoard,to);
-            friendsOnBoard.Animator.SetBool("MoveForward", false);
+            friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to);
+            friendsOnBoard.Animator.SetBool(animation_name, false);
         }
         public abstract IEnumerator MoveWithSkill(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard);
 
