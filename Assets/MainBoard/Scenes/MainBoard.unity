@@ -157,7 +157,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000015258789, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &292423772
@@ -1287,7 +1287,7 @@ MonoBehaviour:
   H: 5
   RowPrefab: {fileID: 8539909421942937010, guid: 2b0e1de5da9aae64e9abd86b3258ae56, type: 3}
   CellPrefab: {fileID: 2303339145093161478, guid: 43b7a6a5bb0d90d4dacc0c7387af8e41, type: 3}
-  BoardManager: {fileID: 0}
+  BoardManager: {fileID: 1616716186}
 --- !u!114 &1991078069
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -16,7 +16,7 @@ namespace JSF.Game.Board
 
         private RectTransform tf;
 
-        public Dictionary<Vector2, Cell> Cells { get; private set; } = new Dictionary<Vector2, Cell>();
+        //public Dictionary<Vector2, Cell> Cells { get; private set; } = new Dictionary<Vector2, Cell>();
 
         // Start is called before the first frame update
         void Start()
@@ -33,8 +33,12 @@ namespace JSF.Game.Board
 
         public void SetBoard()
         {
+            if (!BoardManager)
+            {
+                throw new System.Exception("No BoardManager found!");
+            }
             // セルデータのクリーン
-            Cells.Clear();
+            BoardManager.Map.Clear();
 
             // 全行の消去
             for (var i = tf.childCount - 1; i >= 0; i--)
@@ -65,7 +69,7 @@ namespace JSF.Game.Board
                     if (!cell) { throw new System.Exception("No Cell found in CellPrefab!"); }
                     cell.SelfPos = new Vector2Int(c, r);
 
-                    Cells.Add(cell.SelfPos, cell);
+                    BoardManager.Map.Add(cell.SelfPos, cell);
                 }
             }
         }

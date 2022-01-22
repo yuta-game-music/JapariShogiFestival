@@ -28,5 +28,12 @@ namespace JSF.Game
             int p_aim = p_base + r * (int)dir;
             return PositionUtil.CalcVectorFromCirclePos(r, p_aim);
         }
+
+        // dirが二次元平面上の隣り合うマスを指すか(=斜めでないか)
+        // アニメーション距離に使う
+        public static bool IsStraight(RotationDirection dir)
+        {
+            return (int)dir % 2 == 0;
+        }
     }
 }

@@ -9,7 +9,8 @@ namespace JSF.Game.Board
     {
         public GameObject FriendOnBoardPrefab;
 
-        public Dictionary<Vector2Int, FriendOnBoard> Map { get; private set; }
+        public Dictionary<Vector2Int, Cell> Map { get; private set; } = new Dictionary<Vector2Int, Cell>();
+        public Dictionary<Vector2Int, FriendOnBoard> Friends { get; private set; } = new Dictionary<Vector2Int, FriendOnBoard>();
 
         public BoardRenderer BoardRenderer;
 
@@ -21,7 +22,7 @@ namespace JSF.Game.Board
 
         public bool PlaceFriend(Vector2Int pos, RotationDirection dir, Friend friend)
         {
-            if(BoardRenderer.Cells.TryGetValue(pos, out Cell Cell))
+            if(Map.TryGetValue(pos, out Cell Cell))
             {
                 if (Cell.Friends == null)
                 {
@@ -30,6 +31,7 @@ namespace JSF.Game.Board
                     friendOnBoardObject.transform.localPosition = Vector3.zero;
                     FriendOnBoard friendOnBoard = friendOnBoardObject.GetComponent<FriendOnBoard>();
                     friendOnBoard.Friend = friend;
+                    friendOnBoard.MoveToCell(Cell.SelfPos);
 
                     Cell.Friends = friendOnBoard;
 
@@ -46,6 +48,31 @@ namespace JSF.Game.Board
                 Debug.LogError("No such coordinate: " + pos);
                 return false;
             }
+        }
+        public bool MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to)
+        {
+            if(Map.TryGetValue(friendOnBoard.Pos, out Cell cell_from))
+            {
+                if(Map.TryGetValue(to, out Cell cell_to))
+                {
+                    cell_from.Friends = null;
+                    friendOnBoard.MoveToCell(to);
+                    cell_to.Friends = friendOnBoard;
+                    friendOnBoard.transform.SetParent(cell_to.transform, false);
+                    friendOnBoard.transform.localPosition = Vector3.zero;
+                    Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
+                    return true;
+                }
+                else
+                {
+                    Debug.LogError("No such coordinate: " + to);
+                }
+            }
+            else
+            {
+                Debug.LogError("No such coordinate: " + friendOnBoard.Pos);
+            }
+            return false;
         }
     }
 }

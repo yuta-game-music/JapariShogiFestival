@@ -40,7 +40,18 @@ namespace JSF.Game.Board
 
             BoardManager = BoardManager ?? GetComponentInParent<BoardManager>();
 
-            BoardManager?.PlaceFriend(SelfPos, RotationDirection.FORWARD, FriendsDatabase.Get().GetFriend<Serval>());
+            if (Friends)
+            {
+                // 本来はここでフレンズを選択
+                StartCoroutine(Friends.Friend.MoveNormal(
+                    SelfPos,
+                    SelfPos+RotationDirectionUtil.GetRotatedVector(Vector2Int.down,Friends.Rot),
+                    Friends));
+            }
+            else
+            {
+                BoardManager?.PlaceFriend(SelfPos, RotationDirection.FORWARD, FriendsDatabase.Get().GetFriend<Serval>());
+            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
