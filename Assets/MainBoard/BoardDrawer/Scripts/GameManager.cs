@@ -64,11 +64,11 @@ namespace JSF.Game.Board
                 return false;
             }
         }
-        public bool MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to)
+        public bool MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to, RotationDirection dir)
         {
             if (Map.TryGetValue(to, out Cell cell_to))
             {
-                return MoveFriend(friendOnBoard, cell_to);
+                return MoveFriend(friendOnBoard, cell_to, dir);
             }
             else
             {
@@ -76,7 +76,20 @@ namespace JSF.Game.Board
             }
             return false;
         }
-        public bool MoveFriend(FriendOnBoard friendOnBoard, Cell cell_to)
+        public bool MoveFriendWithAnimation(FriendOnBoard friendOnBoard, Cell cell_to)
+        {
+            if (Map.TryGetValue(friendOnBoard.Pos, out Cell cell_from))
+            {
+                StartCoroutine(friendOnBoard.Friend.MoveNormal(friendOnBoard.Pos, cell_to.SelfPos, friendOnBoard));
+                return true;
+            }
+            else
+            {
+                Debug.LogError("No such coordinate: " + friendOnBoard.Pos);
+            }
+            return false;
+        }
+        public bool MoveFriend(FriendOnBoard friendOnBoard, Cell cell_to, RotationDirection dir)
         {
             if (Map.TryGetValue(friendOnBoard.Pos, out Cell cell_from))
             {
@@ -89,6 +102,7 @@ namespace JSF.Game.Board
                 cell_to.Friends = friendOnBoard;
                 friendOnBoard.transform.SetParent(cell_to.transform, false);
                 friendOnBoard.transform.localPosition = Vector3.zero;
+                friendOnBoard.SetDir(dir);
                 Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
                 return true;
             }

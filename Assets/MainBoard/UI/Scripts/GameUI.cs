@@ -56,7 +56,7 @@ namespace JSF.Game.UI
                 if (movement_settings.CanMoveNormal)
                 {
                     // ƒtƒŒƒ“ƒY‚ðcell‚É“®‚©‚·
-                    GameManager.MoveFriend(SelectedFriendOnBoard, cell);
+                    GameManager.MoveFriendWithAnimation(SelectedFriendOnBoard, cell);
                     return true;
                 }
                 else if (movement_settings.CanEffectBySkill)
@@ -81,7 +81,7 @@ namespace JSF.Game.UI
             {
                 if (movement_settings.CanMoveNormal)
                 {
-                    GameManager.MoveFriend(SelectedFriendOnBoard, to);
+                    GameManager.MoveFriendWithAnimation(SelectedFriendOnBoard, to);
                 }
             }
         }
