@@ -52,5 +52,54 @@ namespace JSF.Game
         {
             return (int)dir * 45;
         }
+
+        // vecから最も近いrotation-degreeを計算する
+        public static RotationDirection CalcRotationDegreeFromVector(Vector2Int vec)
+        {
+            if (vec.x == 0 && vec.y == 0) { return RotationDirection.FORWARD; }
+            var d = (Mathf.Atan2(vec.y,vec.x)*Mathf.Rad2Deg+180)%360;
+            if (d < 0 + 22.5)
+            {
+                return RotationDirection.RIGHT;
+            }
+            else if (d < 45 + 22.5)
+            {
+                return RotationDirection.FORWARD_RIGHT;
+            }
+            else if (d < 90 + 22.5)
+            {
+                return RotationDirection.FORWARD;
+            }
+            else if (d < 135 + 22.5)
+            {
+                return RotationDirection.FORWARD_LEFT;
+            }
+            else if (d < 180 + 22.5)
+            {
+                return RotationDirection.LEFT;
+            }
+            else if (d < 225 + 22.5)
+            {
+                return RotationDirection.BACKWARD_LEFT;
+            }
+            else if (d < 270 + 22.5)
+            {
+                return RotationDirection.BACKWARD;
+            }
+            else if (d < 315 + 22.5)
+            {
+                return RotationDirection.BACKWARD_RIGHT;
+            }
+            else
+            {
+                return RotationDirection.RIGHT;
+            }
+        }
+
+        // fromPosにいる回転角度fromDirのフレンズからtoPosを見たときの相対座標を求める
+        public static Vector2Int GetRelativePos(Vector2Int fromPos, RotationDirection fromDir, Vector2Int toPos)
+        {
+            return GetRotatedVector(toPos - fromPos, Invert(fromDir));
+        }
     }
 }

@@ -1,5 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using JSF.Database;
 using UnityEngine.UI;
@@ -15,11 +15,16 @@ namespace JSF.Game
         public Animator Animator { get; private set; }
         public RectTransform ViewerTF;
         public Image ImageViewer;
-        public Vector2Int Pos { get => (Cell?.SelfPos ?? Vector2Int.zero); }
+        public Image LeaderFrameViewer;
+        public Player.Player Possessor { get; private set; }
+        public bool IsLeader { get; private set; }
+        public Vector2Int? Pos { get => Cell?.SelfPos; }
         public Cell Cell { get; private set; }
         public RotationDirection Dir { get; private set; }
 
         public GameManager GameManager { get; private set; }
+
+        private bool _init = false;
         
         // Start is called before the first frame update
         void Start()
@@ -32,6 +37,7 @@ namespace JSF.Game
                 return;
             }
             Animator = GetComponent<Animator>();
+            Animator.runtimeAnimatorController = Friend.AnimatorOverrideController;
             if (ImageViewer)
             {
                 float zoom = (transform as RectTransform)?.rect.width / 100 ?? 1;
@@ -45,6 +51,26 @@ namespace JSF.Game
         void Update()
         {
 
+        }
+        public void InitialSetup(Cell cell, RotationDirection dir, Player.Player possessor, bool isLeader)
+        {
+            if (_init) { throw new System.Exception("FriendOnBoard at "+cell.SelfPos+" is already initialized!"); }
+            if(isLeader && possessor.Leader!=null && possessor.Leader != this)
+            {
+                // リーダーが2人以上いることは許されない
+                throw new System.Exception("Player " + possessor + " has double leaders!");
+            }
+            Cell = cell;
+            SetDir(dir);
+            Possessor = possessor;
+            this.IsLeader = isLeader;
+            if (isLeader)
+            {
+                possessor.Leader = this;
+                LeaderFrameViewer.enabled = true;
+                LeaderFrameViewer.color = Color.Lerp(possessor.PlayerColor, Color.black, 0.2f);
+            }
+            _init = true;
         }
         public void Rotate(RotationDirection diff)
         {
@@ -72,9 +98,10 @@ namespace JSF.Game
         }
 
         // GameManager経由でのみ呼び出すこと
-        public void GoToLounge(Player.Player player)
+        public IEnumerator GoToLounge(Player.Player player)
         {
-            StartCoroutine(GoToLoungeCoroutine(player));
+            yield return GoToLoungeCoroutine(player);
+            Cell = null;
         }
         private IEnumerator GoToLoungeCoroutine(Player.Player player)
         {
@@ -93,6 +120,24 @@ namespace JSF.Game
             transform.SetParent(player.Lounge, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+        }
+    }
+
+    [CustomEditor(typeof(FriendOnBoard))]
+    public class FriendOnBoardEditor : Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            base.DrawDefaultInspector();
+            FriendOnBoard f = target as FriendOnBoard;
+            using(new EditorGUI.DisabledGroupScope(true))
+            {
+                using (new GUILayout.HorizontalScope())
+                {
+                    GUILayout.Label("Possessor");
+                    EditorGUILayout.ObjectField(f.Possessor, typeof(Player.Player), true);
+                }
+            }
         }
     }
 }

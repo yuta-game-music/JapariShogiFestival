@@ -18,6 +18,7 @@ namespace JSF.Game.Board
         public static readonly Color COLOR_HOVERED = new Color(0.7f,0.7f,0.7f);
         public static readonly Color COLOR_SELECTED = new Color(1f,0.7f,0.7f);
         public static readonly Color COLOR_CAN_MOVE = new Color(0.4f, 1f, 0.55f);
+        public static readonly Color COLOR_CAN_ROTATE = new Color(0.4f, 0.4f, 1f);
         public static readonly Color COLOR_CAN_EFFECT_BY_SKILL = new Color(1f, 0.9f, 0.7f);
 
         private Color ColorByStatus = COLOR_NORMAL;
@@ -38,7 +39,8 @@ namespace JSF.Game.Board
         // Update is called once per frame
         void Update()
         {
-            status = GameManager?.GameUI?.GetCellDrawStatus(this) ?? CellDrawStatus.Normal;
+            bool isOthers = false;
+            status = GameManager?.GameUI?.GetCellDrawStatus(this, out isOthers) ?? CellDrawStatus.Normal;
             switch (status)
             {
                 case CellDrawStatus.Normal:
@@ -47,6 +49,9 @@ namespace JSF.Game.Board
                 case CellDrawStatus.CanMove:
                     ColorByStatus = COLOR_CAN_MOVE;
                     break;
+                case CellDrawStatus.CanRotate:
+                    ColorByStatus = COLOR_CAN_ROTATE;
+                    break;
                 case CellDrawStatus.CanEffectBySkill:
                     ColorByStatus = COLOR_CAN_EFFECT_BY_SKILL;
                     break;
@@ -54,7 +59,12 @@ namespace JSF.Game.Board
                     ColorByStatus = COLOR_SELECTED;
                     break;
             }
-            ImageRenderer.color = Color.Lerp(ColorByStatus, ColorByMouseOver, 0.5f);
+            Color tmp = Color.Lerp(ColorByStatus, ColorByMouseOver, 0.5f);
+            if (isOthers)
+            {
+                tmp = Color.Lerp(tmp, Color.black, 0.4f);
+            }
+            ImageRenderer.color = tmp;
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -65,12 +75,7 @@ namespace JSF.Game.Board
 
             if (Friends)
             {
-                // 本来はここでフレンズを選択
                 GameManager?.GameUI?.OnClickFriendsOnBoard(Friends);
-                /*StartCoroutine(Friends.Friend.MoveNormal(
-                    SelfPos,
-                    SelfPos+RotationDirectionUtil.GetRotatedVector(Vector2Int.down,Friends.Rot),
-                    Friends));*/
             }
             else
             {
