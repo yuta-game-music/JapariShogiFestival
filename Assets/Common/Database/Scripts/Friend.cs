@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using JSF.Game;
+using JSF.Game.Board;
 
 namespace JSF.Database
 {
@@ -25,13 +26,14 @@ namespace JSF.Database
             friendsOnBoard.ViewerTF.transform.localRotation = Quaternion.FromToRotation(Vector3.up, new Vector3(diff.x,diff.y,0));
 
             yield return new WaitUntil(() => friendsOnBoard.Animator.GetCurrentAnimatorStateInfo(layer_id).IsName("WaitingForControl"));
-            friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to, friendsOnBoard.Dir);
+            yield return friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to, RotationDirectionUtil.CalcRotationDegreeFromVector(-(to-from)));
             friendsOnBoard.Animator.SetBool(animation_name, false);
         }
-        public abstract IEnumerator MoveWithSkill(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard);
+        public abstract IEnumerator OnUseSkill(Vector2Int from, Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager);
 
         public Sprite OnBoardImage;
-
+        public Sprite CutInImage;
+        public AnimatorOverrideController AnimatorOverrideController;
     }
 
 }
