@@ -1,10 +1,9 @@
 using JSF.Database;
-using JSF.Database.Friends;
 using JSF.Game.Board;
 using JSF.Game.Effect;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace JSF.Game.UI
 {
@@ -13,6 +12,8 @@ namespace JSF.Game.UI
         public GameManager GameManager;
 
         public ViewCanvasController ViewCanvasController;
+
+        public WaitButton WaitButton;
 
         public GameObject CutInPrefab;
         public GameObject GameEndPrefab;
@@ -157,6 +158,11 @@ namespace JSF.Game.UI
             }
         }
 
+        public IEnumerator OnPlayerTurnStart(Player.Player PlayerInTurn)
+        {
+            WaitButton.SetPlayerColor(PlayerInTurn.PlayerColor);
+            yield return null;
+        }
         private IEnumerator MoveFriendCoroutine(FriendOnBoard SelectedFriendOnBoard, Cell to, RotationDirection? dir, bool Animated)
         {
             CanInteract = false;
@@ -194,6 +200,10 @@ namespace JSF.Game.UI
                 }
                 if (SelectedFriendOnBoard.Pos == cell.SelfPos)
                 {
+                    if (cell.Friends != null && cell.Friends.Possessor != GameManager.PlayerInTurn)
+                    {
+                        isOthers = true;
+                    }
                     return CellDrawStatus.Selected;
                 }
                 Vector2Int diff = cell.SelfPos - SelectedFriendOnBoard.Pos.Value;
@@ -242,6 +252,10 @@ namespace JSF.Game.UI
             }
             else
             {
+                if (cell.Friends != null && cell.Friends.Possessor != GameManager.PlayerInTurn)
+                {
+                    isOthers = true;
+                }
                 return CellDrawStatus.Normal;
             }
         }

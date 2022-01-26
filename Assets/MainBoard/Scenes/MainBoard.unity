@@ -1042,6 +1042,10 @@ PrefabInstance:
       propertyPath: Type
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 1775077768553544398, guid: 564093b43a6894849a8643ad6bbda843, type: 3}
+      propertyPath: PlayerType
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 2910338884715874539, guid: 564093b43a6894849a8643ad6bbda843, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -1393,6 +1397,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GameManager: {fileID: 726719078}
   ViewCanvasController: {fileID: 2024148209}
+  WaitButton: {fileID: 61056079}
   CutInPrefab: {fileID: 4420833748743932893, guid: 0859ac29d339de549805ebd99a0a0bc8, type: 3}
   GameEndPrefab: {fileID: 4420833748743932893, guid: 5a256f8c5dfb1fc44995155a41f4613a, type: 3}
   SelectedFriendOnBoard: {fileID: 0}

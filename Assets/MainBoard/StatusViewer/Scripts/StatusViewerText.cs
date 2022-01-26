@@ -20,9 +20,9 @@ namespace JSF.Game.UI
                 StringBuilder sb = new StringBuilder();
                 foreach(var player in Manager.Players)
                 {
-                    if (player.Type == Player.PlayerType.Cellien) { continue; }
+                    if (player.PlayerType == Player.PlayerType.Cellien) { continue; }
                     sb.Append(player.PlayerName);
-                    if (player.Type == Player.PlayerType.CPU)
+                    if (player.PlayerType == Player.PlayerType.CPU)
                     {
                         sb.Append("<color=#808080>[CPU]</color>");
                     }

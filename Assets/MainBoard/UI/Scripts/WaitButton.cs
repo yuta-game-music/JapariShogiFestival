@@ -10,9 +10,12 @@ namespace JSF.Game.UI
     {
         public GameUI GameUI;
         public Image Image;
-        public static readonly Color COLOR_NORMAL = new Color(0.6427109f, 0.9021074f, 0.9528302f);
-        public static readonly Color COLOR_HIGHLIGHT = new Color(0.57135545f, 0.7010537f, 0.7264151f);
-        public static readonly Color COLOR_CLICKED = new Color(0.8f, 0.6f, 0.6f);
+        public static readonly Color COLOR_NORMAL = Color.white;
+        public static readonly Color COLOR_HIGHLIGHT = new Color(0.8f,0.8f, 0.8f);
+        public static readonly Color COLOR_CLICKED = new Color(0.6f, 0.6f, 0.6f);
+
+        private Color PlayerColor = Color.white;
+        private Color MouseColor = COLOR_NORMAL;
         // Start is called before the first frame update
         void Start()
         {
@@ -22,22 +25,27 @@ namespace JSF.Game.UI
         // Update is called once per frame
         void Update()
         {
-
+            Image.color = Color.Lerp(PlayerColor, MouseColor, 0.5f);
         }
         public void OnPointerClick(PointerEventData eventData)
         {
-            Image.color = COLOR_CLICKED;
+            MouseColor = COLOR_CLICKED;
             GameUI.OnClickSkip();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            Image.color = COLOR_HIGHLIGHT;
+            MouseColor = COLOR_HIGHLIGHT;
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            Image.color = COLOR_NORMAL;
+            MouseColor = COLOR_NORMAL;
+        }
+
+        public void SetPlayerColor(Color color)
+        {
+            PlayerColor = Color.Lerp(color,Color.white, 0.8f);
         }
     }
 

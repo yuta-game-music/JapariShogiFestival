@@ -27,7 +27,21 @@ namespace JSF.Game
 
         public void Start()
         {
-            StartCoroutine(PlaceFriendsRandomly());
+            for (var i = 0; i < GlobalVariable.Players.Length; i++)
+            {
+                // 2倍しているのは間にセルリアンを挟むため
+                Players[2 * i].PlayerName = GlobalVariable.Players[i].Name;
+                Players[2 * i].PlayerType = GlobalVariable.Players[i].PlayerType;
+                Players[2 * i].Init();
+            }
+            // Playersの奇数番目には必ず同一のオブジェクトCellienが入っている
+            Players[1].PlayerName = "セルリアン軍";
+            Players[1].PlayerType = Player.PlayerType.Cellien;
+            Players[1].Init();
+            if (GlobalVariable.DebugMode)
+            {
+                StartCoroutine(PlaceFriendsRandomly());
+            }
         }
 
         private IEnumerator PlaceFriendsRandomly()
@@ -38,7 +52,7 @@ namespace JSF.Game
                 var player_full_on_downside = false;
                 foreach(var p in Players)
                 {
-                    if(p.Type == Player.PlayerType.Cellien) { continue; }
+                    if(p.PlayerType == Player.PlayerType.Cellien) { continue; }
 
                     Vector2Int pos;
                     do
@@ -59,6 +73,7 @@ namespace JSF.Game
                     yield return new WaitForSeconds(0.3f);
                 }
             }
+            yield return OnTurnStart();
         }
 
         private void Update()
@@ -224,9 +239,10 @@ namespace JSF.Game
         public IEnumerator OnTurnStart()
         {
             GameUI.ResetView();
-            switch (PlayerInTurn.Type)
+            switch (PlayerInTurn.PlayerType)
             {
                 case Player.PlayerType.User:
+                    yield return GameUI.OnPlayerTurnStart(PlayerInTurn);
                     yield break;
                 case Player.PlayerType.Cellien:
                     // TODO: セルリアンの行動はここに
@@ -237,7 +253,7 @@ namespace JSF.Game
                     yield return OnTurnPass();
                     break;
                 default:
-                    Debug.LogWarning("Unknown Player Type "+PlayerInTurn.Type+"! Passing this turn...");
+                    Debug.LogWarning("Unknown Player Type "+PlayerInTurn.PlayerType+"! Passing this turn...");
                     yield return OnTurnPass();
                     break;
             }
@@ -263,7 +279,7 @@ namespace JSF.Game
             Player.Player Candidate = null;
             foreach(var player in Players)
             {
-                if(player.Type == Player.PlayerType.Cellien)
+                if(player.PlayerType == Player.PlayerType.Cellien)
                 {
                     // セルリアンは対象外
                     continue;

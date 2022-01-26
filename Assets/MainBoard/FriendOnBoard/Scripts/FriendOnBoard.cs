@@ -67,8 +67,11 @@ namespace JSF.Game
             if (isLeader)
             {
                 possessor.Leader = this;
-                LeaderFrameViewer.enabled = true;
                 LeaderFrameViewer.color = Color.Lerp(possessor.PlayerColor, Color.black, 0.2f);
+            }
+            else
+            {
+                LeaderFrameViewer.color = Color.Lerp(possessor.PlayerColor, Color.white, 0.6f);
             }
             _init = true;
         }

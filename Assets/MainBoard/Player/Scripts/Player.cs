@@ -8,7 +8,7 @@ namespace JSF.Game.Player
     public class Player : MonoBehaviour
     {
         public string PlayerName = "Player";
-        public PlayerType Type = PlayerType.User;
+        public PlayerType PlayerType = PlayerType.User;
 
         public FriendOnBoard Leader { get => get_leader(); set => set_leader(value); }
         [SerializeField]
@@ -32,6 +32,7 @@ namespace JSF.Game.Player
         public Image LeaderImage;
         public RectTransform LeaderImageTF;
         public Transform Lounge;
+        public TMPro.TMP_Text NameText;
 
         private void Start()
         {
@@ -42,6 +43,23 @@ namespace JSF.Game.Player
             if (LeaderImageTF)
             {
                 LeaderImageTF.localScale = new Vector3(LeaderImageTF.rect.height / 100, 1, 1);
+            }
+        }
+
+        public void Init()
+        {
+            if (NameText)
+            {
+                NameText.text = PlayerName;
+            }
+
+            if(PlayerType == PlayerType.Cellien)
+            {
+                NameText.enabled = true;
+            }
+            else
+            {
+                NameText.enabled = true;
             }
         }
     }

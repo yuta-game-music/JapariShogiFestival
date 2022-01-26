@@ -62,7 +62,7 @@ namespace JSF.Game.Board
             Color tmp = Color.Lerp(ColorByStatus, ColorByMouseOver, 0.5f);
             if (isOthers)
             {
-                tmp = Color.Lerp(tmp, Color.black, 0.4f);
+                tmp = Color.Lerp(tmp, Color.black, 0.2f);
             }
             ImageRenderer.color = tmp;
         }
