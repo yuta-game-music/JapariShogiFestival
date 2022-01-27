@@ -35,6 +35,7 @@ namespace JSF.Database
         public Sprite CutInImage;
         public AnimatorOverrideController AnimatorOverrideController;
 
+        public string[] SettingsMessage;
         public string[] WinnersMessage;
         public string[] LosersMessage;
         public string[] DrawMessage;
