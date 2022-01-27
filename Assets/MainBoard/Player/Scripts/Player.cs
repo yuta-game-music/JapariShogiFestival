@@ -9,6 +9,7 @@ namespace JSF.Game.Player
     {
         public string PlayerName = "Player";
         public PlayerType PlayerType = PlayerType.User;
+        public PlayerInfo? PlayerInfo;
 
         public FriendOnBoard Leader { get => get_leader(); set => set_leader(value); }
         [SerializeField]
