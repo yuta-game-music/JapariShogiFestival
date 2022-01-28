@@ -14,15 +14,22 @@ namespace JSF.Game.Board
     {
         CellDrawStatus status = CellDrawStatus.Normal;
         Image ImageRenderer;
+
+        // 回転操作でのみ利用できるセル（そこに行くことはできない）にはtrueを入れる
+        public bool RotationOnly = false;
+
+        // マウス状態による色変化
         public static readonly Color COLOR_NORMAL = Color.white;
         public static readonly Color COLOR_HOVERED = new Color(0.7f,0.7f,0.7f);
         public static readonly Color COLOR_SELECTED = new Color(1f,0.7f,0.7f);
+        private Color ColorByMouseOver = COLOR_NORMAL;
+
+        // UIによる動的な色変化
+        public static readonly Color COLOR_CANNOT_USE = new Color(0.2f, 0.2f, 0.2f);
         public static readonly Color COLOR_CAN_MOVE = new Color(0.4f, 1f, 0.55f);
         public static readonly Color COLOR_CAN_ROTATE = new Color(0.4f, 0.4f, 1f);
-        public static readonly Color COLOR_CAN_EFFECT_BY_SKILL = new Color(1f, 0.9f, 0.7f);
-
+        public static readonly Color COLOR_CAN_EFFECT_BY_SKILL = new Color(1f, 0.7f, 0.6f);
         private Color ColorByStatus = COLOR_NORMAL;
-        private Color ColorByMouseOver = COLOR_NORMAL;
 
         public Vector2Int SelfPos;
         public FriendOnBoard Friends;
@@ -39,12 +46,15 @@ namespace JSF.Game.Board
         // Update is called once per frame
         void Update()
         {
-            bool isOthers = false;
-            status = GameManager?.GameUI?.GetCellDrawStatus(this, out isOthers) ?? CellDrawStatus.Normal;
+            bool disabled = false;
+            status = GameManager?.GameUI?.GetCellDrawStatus(this, out disabled) ?? CellDrawStatus.Normal;
             switch (status)
             {
                 case CellDrawStatus.Normal:
                     ColorByStatus = COLOR_NORMAL;
+                    break;
+                case CellDrawStatus.CannotUse:
+                    ColorByStatus = COLOR_CANNOT_USE;
                     break;
                 case CellDrawStatus.CanMove:
                     ColorByStatus = COLOR_CAN_MOVE;
@@ -60,7 +70,7 @@ namespace JSF.Game.Board
                     break;
             }
             Color tmp = Color.Lerp(ColorByStatus, ColorByMouseOver, 0.5f);
-            if (isOthers)
+            if (disabled)
             {
                 tmp = Color.Lerp(tmp, Color.black, 0.2f);
             }

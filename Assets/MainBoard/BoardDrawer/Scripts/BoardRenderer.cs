@@ -14,6 +14,7 @@ namespace JSF.Game.Board
 
         public GameManager BoardManager;
 
+        public RectTransform SizeReferenceTF;
         private RectTransform tf;
 
         //public Dictionary<Vector2, Cell> Cells { get; private set; } = new Dictionary<Vector2, Cell>();
@@ -47,7 +48,7 @@ namespace JSF.Game.Board
             }
 
             // çsÇÃê∂ê¨
-            for (int r = 0; r < H; r++)
+            for (int r = -1; r <= H; r++)// -1Ç∆HÇÕRotationOnly
             {
                 GameObject row = Instantiate(RowPrefab);
                 row.name = "Row" + r;
@@ -60,7 +61,7 @@ namespace JSF.Game.Board
                 }
 
                 // ÉZÉãÇÃê∂ê¨
-                for (int c = 0; c < W; c++)
+                for (int c = -1; c <= W; c++)// -1Ç∆WÇÕRotationOnly
                 {
                     GameObject cellObject = Instantiate(CellPrefab);
                     cellObject.name = "Cell" + r + "_" + c;
@@ -68,7 +69,7 @@ namespace JSF.Game.Board
                     Cell cell = cellObject.GetComponent<Cell>();
                     if (!cell) { throw new System.Exception("No Cell found in CellPrefab!"); }
                     cell.SelfPos = new Vector2Int(c, r);
-
+                    cell.RotationOnly = !(0 <= c && c < W && 0 <= r && r < H);
                     BoardManager.Map.Add(cell.SelfPos, cell);
                 }
             }
@@ -77,7 +78,7 @@ namespace JSF.Game.Board
         // Update is called once per frame
         void Update()
         {
-
+            tf.sizeDelta = Vector2.one * (Mathf.Min(SizeReferenceTF.rect.width, SizeReferenceTF.rect.height)*0.9f);
         }
     }
 

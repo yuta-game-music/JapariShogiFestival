@@ -105,6 +105,7 @@ namespace JSF.Game
         {
             yield return GoToLoungeCoroutine(player);
             Cell = null;
+            SetDir(RotationDirection.FORWARD);
         }
         private IEnumerator GoToLoungeCoroutine(Player.Player player)
         {

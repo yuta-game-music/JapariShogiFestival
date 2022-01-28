@@ -17,6 +17,11 @@ namespace JSF.Game.Effect
 
         private void Start()
         {
+            if(transform is RectTransform ThisTF && transform.parent is RectTransform ParentTF)
+            {
+                ThisTF.sizeDelta = new Vector2(ParentTF.rect.width, ThisTF.sizeDelta.y);
+            }
+
             if(SizeBaseTF && ImageTF)
             {
                 var scale = Mathf.Min(SizeBaseTF.rect.height, SizeBaseTF.rect.width) / 200f;
