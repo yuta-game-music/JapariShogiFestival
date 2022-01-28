@@ -13,7 +13,12 @@ namespace JSF.Common.UI
         public Color ClickedColor = new Color(1,0.7f,0.7f);
 
         public Image Image;
-
+        public void SetAllColor(Color NormalColor)
+        {
+            this.NormalColor = NormalColor;
+            this.HoveredColor = Color.Lerp(NormalColor, Color.black, 0.2f);
+            this.ClickedColor = Color.Lerp(NormalColor, Color.red, 0.2f);
+        }
         public abstract void OnClick();
         public void OnPointerClick(PointerEventData eventData)
         {
@@ -27,6 +32,10 @@ namespace JSF.Common.UI
         }
 
         public void OnPointerExit(PointerEventData eventData)
+        {
+            Image.color = NormalColor;
+        }
+        private void Start()
         {
             Image.color = NormalColor;
         }
