@@ -1,3 +1,4 @@
+using JSF.Common.UI;
 using JSF.Database;
 using JSF.Game.Board;
 using JSF.Game.Effect;
@@ -17,6 +18,7 @@ namespace JSF.Game.UI
 
         public GameObject CutInPrefab;
         public GameObject GameEndPrefab;
+        public WhiteOutEffectController whiteOutEffectController;
 
         [SerializeField]
         private FriendOnBoard SelectedFriendOnBoard;
@@ -104,7 +106,7 @@ namespace JSF.Game.UI
                 diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(SelectedFriendOnBoard.Dir));
                 if (SelectedFriendOnBoard.Friend.GetMovementSheet().TryGetValue(diff, out MovementSettings movement_settings))
                 {
-                    if (UIMode == UIMode.Move && movement_settings.CanMoveNormal)
+                    if (UIMode == UIMode.Move && movement_settings.CanMoveNormal && !cell.RotationOnly)
                     {
                         // フレンズをcellに動かす
                         StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, cell, null, true));
@@ -116,8 +118,12 @@ namespace JSF.Game.UI
                         StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, SelectedFriendOnBoard.Cell, RotationDirectionUtil.CalcRotationDegreeFromVector(SelectedFriendOnBoard.Pos.Value - cell.SelfPos), false));
                         return true;
                     }
-                    else if (UIMode == UIMode.Skill && movement_settings.CanEffectBySkill)
+                    else if (UIMode == UIMode.Skill && movement_settings.CanEffectBySkill && !cell.RotationOnly)
                     {
+                        if (movement_settings.NeededSandstarForSkill > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        {
+                            return false;
+                        }
                         // スキル発動
                         StartCoroutine(UseSkillCoroutine(SelectedFriendOnBoard, cell));
                         return true;
@@ -187,10 +193,10 @@ namespace JSF.Game.UI
             CanInteract = true;
         }
 
-        public CellDrawStatus GetCellDrawStatus(Cell cell, out bool isOthers)
+        public CellDrawStatus GetCellDrawStatus(Cell cell, out bool disabled)
         {
-            if (!CanInteract) { isOthers = false; return CellDrawStatus.Normal; }
-            isOthers = false;
+            if (!CanInteract) { disabled = false; return CellDrawStatus.Normal; }
+            disabled = false;
             if (SelectedFriendOnBoard)
             {
                 if (!SelectedFriendOnBoard.Pos.HasValue)
@@ -202,7 +208,7 @@ namespace JSF.Game.UI
                 {
                     if (cell.Friends != null && cell.Friends.Possessor != GameManager.PlayerInTurn)
                     {
-                        isOthers = true;
+                        disabled = true;
                     }
                     return CellDrawStatus.Selected;
                 }
@@ -210,7 +216,7 @@ namespace JSF.Game.UI
                 diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(SelectedFriendOnBoard.Dir));
                 if (SelectedFriendOnBoard.Friend.GetMovementSheet().TryGetValue(diff, out MovementSettings movement_settings))
                 {
-                    if (UIMode==UIMode.Move && movement_settings.CanMoveNormal)
+                    if (UIMode==UIMode.Move && !cell.RotationOnly && movement_settings.CanMoveNormal)
                     {
                         return CellDrawStatus.CanMove;
                     }
@@ -218,13 +224,17 @@ namespace JSF.Game.UI
                     {
                         return CellDrawStatus.CanRotate;
                     }
-                    else if (UIMode == UIMode.Skill && movement_settings.CanEffectBySkill)
+                    else if (UIMode == UIMode.Skill && !cell.RotationOnly && movement_settings.CanEffectBySkill)
                     {
+                        if (movement_settings.NeededSandstarForSkill > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        {
+                            disabled = true;
+                        }
                         return CellDrawStatus.CanEffectBySkill;
                     }
                     else if (UIMode == UIMode.View)
                     {
-                        isOthers = true;
+                        disabled = true;
                         if (movement_settings.CanMoveNormal)
                         {
                             return CellDrawStatus.CanMove;
@@ -239,24 +249,31 @@ namespace JSF.Game.UI
                         }
                         else
                         {
-                            isOthers = false;
+                            disabled = false;
                             return CellDrawStatus.Normal;
                         }
                     }
                     else
                     {
-                        return CellDrawStatus.Normal;
+                        return CellDrawStatus.CannotUse;
                     }
                 }
-                return CellDrawStatus.Normal;
+                return CellDrawStatus.CannotUse;
             }
             else
             {
                 if (cell.Friends != null && cell.Friends.Possessor != GameManager.PlayerInTurn)
                 {
-                    isOthers = true;
+                    disabled = true;
                 }
-                return CellDrawStatus.Normal;
+                if (cell.RotationOnly)
+                {
+                    return CellDrawStatus.CannotUse;
+                }
+                else
+                {
+                    return CellDrawStatus.Normal;
+                }
             }
         }
 
@@ -283,12 +300,12 @@ namespace JSF.Game.UI
             RectTransform tf = GameEndObject.GetComponent<RectTransform>();
             //tf.anchorMin = new Vector2(0,0.3f);
             //tf.anchorMax = new Vector2(1,0.7f);
-
+            
             GameEndEffectController cont = GameEndObject.GetComponent<GameEndEffectController>();
             cont.SetWinner(Winner);
-            yield return new WaitUntil(() => cont.AnimationEnd);
-            
-            // TODO: シーン遷移
+            //yield return new WaitUntil(() => cont.AnimationEnd);
+            yield return new WaitForSeconds(1f);
+            yield return whiteOutEffectController.PlayWhiteIn();
         }
 
         public void ResetView()
@@ -301,7 +318,7 @@ namespace JSF.Game.UI
 
     public enum CellDrawStatus
     {
-        Normal, CanMove, CanRotate, CanEffectBySkill, Selected
+        Normal, CanMove, CanRotate, CanEffectBySkill, Selected, CannotUse
     }
 
     public enum UIMode
