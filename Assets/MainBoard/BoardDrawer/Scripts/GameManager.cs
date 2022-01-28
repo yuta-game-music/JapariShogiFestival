@@ -5,6 +5,7 @@ using UnityEngine;
 using JSF.Game.UI;
 using JSF.Game.Board;
 using JSF.Database.Friends;
+using UnityEngine.SceneManagement;
 
 namespace JSF.Game
 {
@@ -27,14 +28,20 @@ namespace JSF.Game
 
         public void Start()
         {
+            // 盤面設定
+            BoardRenderer.W = GlobalVariable.BoardW;
+            BoardRenderer.H = GlobalVariable.BoardH;
+
             for (var i = 0; i < GlobalVariable.Players.Length; i++)
             {
                 // 2倍しているのは間にセルリアンを挟むため
+                Players[2 * i].PlayerInfo = GlobalVariable.Players[i];
                 Players[2 * i].PlayerName = GlobalVariable.Players[i].Name;
                 Players[2 * i].PlayerType = GlobalVariable.Players[i].PlayerType;
                 Players[2 * i].Init();
             }
             // Playersの奇数番目には必ず同一のオブジェクトCellienが入っている
+            Players[1].PlayerInfo = null;
             Players[1].PlayerName = "セルリアン軍";
             Players[1].PlayerType = Player.PlayerType.Cellien;
             Players[1].Init();
@@ -47,12 +54,15 @@ namespace JSF.Game
         private IEnumerator PlaceFriendsRandomly()
         {
             yield return new WaitForSeconds(0.5f);
-            for(var i = 0; i < 4; i++)
+            for(var i = 0; true; i++)
             {
                 var player_full_on_downside = false;
+                var placed_any_friend = false;
                 foreach(var p in Players)
                 {
                     if(p.PlayerType == Player.PlayerType.Cellien) { continue; }
+                    if (!p.PlayerInfo.HasValue) { continue; }
+                    if (p.PlayerInfo.Value.Friends.Length <= i) { continue; }
 
                     Vector2Int pos;
                     do
@@ -66,12 +76,14 @@ namespace JSF.Game
                     PlaceFriend(
                         pos,
                         player_full_on_downside ? RotationDirection.BACKWARD : RotationDirection.FORWARD,
-                        FriendsDatabase.Get().GetFriend<Serval>(),
+                        p.PlayerInfo.Value.Friends[i],
                         p,
                         i==0);
                     player_full_on_downside = !player_full_on_downside;
                     yield return new WaitForSeconds(0.3f);
+                    placed_any_friend = true;
                 }
+                if (!placed_any_friend) { break; }
             }
             yield return OnTurnStart();
         }
@@ -267,6 +279,8 @@ namespace JSF.Game
             {
                 Debug.Log("Winner: "+Winner);
                 yield return GameUI.PlayFinish(Winner);
+                GlobalVariable.Winner = Winner.PlayerInfo;
+                SceneManager.LoadScene("ResultPage");
             }
             else
             {
