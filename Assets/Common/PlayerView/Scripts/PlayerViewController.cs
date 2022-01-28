@@ -1,3 +1,4 @@
+using JSF.Common.FriendsSelector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,13 +6,17 @@ using UnityEngine.UI;
 
 namespace JSF.Common.PlayerView
 {
+    public delegate IEnumerator OnClickFriend(int FriendsPos);
     public class PlayerViewController : MonoBehaviour
     {
         public Situation Situation;
 
         public PlayerInfo? PlayerInfo;
+        public OnClickFriend OnClickFriend;
 
         public Image BackgroundImage;
+        public LeaderThumbController LeaderThumbController;
+        public RectTransform LeaderBackgroundTF;
         public Image LeaderThumbImage;
         public Transform MemberListParent;
         public GameObject MemberFriendPrefab;
@@ -46,7 +51,16 @@ namespace JSF.Common.PlayerView
                 }
                 var playerInfo = PlayerInfo.Value;
                 BackgroundImage.color = Color.Lerp(playerInfo.PlayerColor, Color.white, 0.8f);
+
+                // 大将フレンズ
+                LeaderBackgroundTF.localScale = new Vector3(LeaderBackgroundTF.rect.height / LeaderBackgroundTF.rect.width, 1, 1);
                 LeaderThumbImage.sprite = playerInfo.Leader?.CutInImage;
+                if (LeaderThumbController)
+                {
+                    //LeaderThumbController.SetAllColor(Color.Lerp(playerInfo.PlayerColor, Color.white, 0.7f));
+                    LeaderThumbController.OnClickFriend = OnClickFriendFunc;
+                }
+
                 PlayerNameText.text = playerInfo.Name;
                 // メンバーフレンズ
                 for(var i = 1; i < playerInfo.Friends.Length; i++)
@@ -58,6 +72,9 @@ namespace JSF.Common.PlayerView
                     if (memberFriendController)
                     {
                         memberFriendController.FriendImage.sprite = playerInfo.Friends[i].CutInImage;
+                        //memberFriendController.SetAllColor(Color.Lerp(playerInfo.PlayerColor, Color.white, 0.7f));
+                        memberFriendController.PosID = i;
+                        memberFriendController.OnClickFriend = OnClickFriendFunc;
                     }
                 }
 
@@ -107,6 +124,16 @@ namespace JSF.Common.PlayerView
 
                 _init = true;
             }
+        }
+
+        private IEnumerator OnClickFriendFunc(int id)
+        {
+            yield return OnClickFriend(id);
+        }
+
+        public void Refresh()
+        {
+            _init = false;
         }
     }
 

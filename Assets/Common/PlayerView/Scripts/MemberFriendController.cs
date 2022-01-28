@@ -5,11 +5,21 @@ using UnityEngine.UI;
 
 namespace JSF.Common.PlayerView
 {
-    public class MemberFriendController : MonoBehaviour
+    public class MemberFriendController : UI.Button
     {
+        public int PosID = 1;
+        public OnClickFriend OnClickFriend;
+
         public Image FriendImage;
 
         private RectTransform tf;
+        public override void OnClick()
+        {
+            if (OnClickFriend != null)
+            {
+                StartCoroutine(OnClickFriend.Invoke(PosID));
+            }
+        }
 
         private void Update()
         {
