@@ -21,6 +21,8 @@ namespace JSF.Common.PlayerView
         public Transform MemberListParent;
         public GameObject MemberFriendPrefab;
 
+        public GameObject PlayerNameEditor;
+        public GameObject PlayerNameViewer;
         public TMPro.TMP_Text PlayerNameText;
         public TMPro.TMP_Text LeaderMessageText;
 
@@ -47,18 +49,40 @@ namespace JSF.Common.PlayerView
                     // セルリアン戦では対戦相手のPlayerInfoをnullにしておく
                     // その際はこの表示を消す(TODO:要検討)
                     Destroy(gameObject);
+                    _init = true;
                     return;
                 }
                 var playerInfo = PlayerInfo.Value;
                 BackgroundImage.color = Color.Lerp(playerInfo.PlayerColor, Color.white, 0.8f);
 
+                // モードによってプレイヤー名が編集可能かどうかが変わる
+                switch (Situation)
+                {
+                    case Situation.Setting:
+                        // プレイヤー名が編集可能なシーン
+                        PlayerNameEditor.SetActive(true);
+                        PlayerNameViewer.SetActive(false);
+                        break;
+                    case Situation.Result:
+                        // プレイヤー名が編集不可なシーン
+                        PlayerNameEditor.SetActive(false);
+                        PlayerNameViewer.SetActive(true);
+                        break;
+                }
+
                 // 大将フレンズ
-                LeaderBackgroundTF.localScale = new Vector3(LeaderBackgroundTF.rect.height / LeaderBackgroundTF.rect.width, 1, 1);
+                //LeaderBackgroundTF.sizeDelta = new Vector2(LeaderBackgroundTF.rect.height / LeaderBackgroundTF.rect.width, 1);
                 LeaderThumbImage.sprite = playerInfo.Leader?.CutInImage;
                 if (LeaderThumbController)
                 {
                     //LeaderThumbController.SetAllColor(Color.Lerp(playerInfo.PlayerColor, Color.white, 0.7f));
                     LeaderThumbController.OnClickFriend = OnClickFriendFunc;
+                }
+
+                // メンバーフレンズを一度全部消す
+                for(var i = MemberListParent.childCount - 1; i >= 0; i--)
+                {
+                    Destroy(MemberListParent.GetChild(i).gameObject);
                 }
 
                 PlayerNameText.text = playerInfo.Name;
