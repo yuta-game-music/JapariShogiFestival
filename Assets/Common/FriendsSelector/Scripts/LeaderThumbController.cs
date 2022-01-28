@@ -10,6 +10,8 @@ namespace JSF.Common.FriendsSelector
     public class LeaderThumbController : UI.Button
     {
         public OnClickFriend OnClickFriend;
+        public RectTransform ImageTF;
+        private RectTransform TF;
 
         public override void OnClick()
         {
@@ -17,6 +19,15 @@ namespace JSF.Common.FriendsSelector
             {
                 StartCoroutine(OnClickFriend.Invoke(0));
             }
+        }
+        private void Start()
+        {
+            TF = GetComponent<RectTransform>();
+        }
+        private void Update()
+        {
+            ImageTF.sizeDelta = Vector2.one * Mathf.Min(TF.rect.size.x, TF.rect.size.y);
+
         }
     }
 
