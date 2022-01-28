@@ -23,7 +23,8 @@ namespace JSF.Database
             Vector2Int diff = to - from;
             Debug.Log(diff+": "+ diff.magnitude);
             friendsOnBoard.Animator.SetLayerWeight(layer_id, diff.magnitude * 0.01f);
-            friendsOnBoard.ViewerTF.transform.localRotation = Quaternion.FromToRotation(Vector3.up, new Vector3(diff.x,diff.y,0));
+            Vector3 rot_base = Quaternion.FromToRotation(Vector3.up, new Vector3(diff.x, diff.y, 0)).eulerAngles;
+            friendsOnBoard.ViewerTF.transform.localRotation = Quaternion.Euler(0, 0, rot_base.z);
 
             yield return new WaitUntil(() => friendsOnBoard.Animator.GetCurrentAnimatorStateInfo(layer_id).IsName("WaitingForControl"));
             yield return friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to, RotationDirectionUtil.CalcRotationDegreeFromVector(-(to-from)));
