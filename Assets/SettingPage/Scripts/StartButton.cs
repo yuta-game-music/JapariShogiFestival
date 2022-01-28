@@ -7,6 +7,7 @@ namespace JSF.SettingPage
 {
     public class StartButton : Common.UI.Button
     {
+        public SettingPageController SettingPageController;
         public override void OnClick()
         {
             StartCoroutine(StartButtonCoroutine());
@@ -14,6 +15,7 @@ namespace JSF.SettingPage
 
         IEnumerator StartButtonCoroutine()
         {
+            yield return SettingPageController.PlayWhiteOutEffect();
             SceneManager.LoadScene("MainBoard");
             yield return null;
         }
