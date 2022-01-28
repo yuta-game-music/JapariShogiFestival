@@ -2,11 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using JSF.Common.PlayerView;
+using JSF.Common.UI;
 
 namespace JSF.Result
 {
     public class ResultPageController : MonoBehaviour
     {
+        public WhiteOutEffectController WhiteOutEffectController;
+
         public PlayerViewController PlayerViewController1;
         public PlayerViewController PlayerViewController2;
 
