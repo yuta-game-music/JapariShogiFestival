@@ -5,11 +5,13 @@ using JSF.Common.PlayerView;
 using JSF.Database;
 using JSF.Database.Friends;
 using JSF.Common.FriendsSelector;
+using JSF.Common.UI;
 
 namespace JSF.SettingPage
 {
     public class SettingPageController : MonoBehaviour
     {
+        public WhiteOutEffectController WhiteOutEffectController;
         public PlayerViewController PlayerViewController1;
         public PlayerViewController PlayerViewController2;
 
@@ -27,8 +29,8 @@ namespace JSF.SettingPage
                     FriendsDatabase.Get().GetFriend<Serval>(),
                 };
             }
-            GlobalVariable.BoardH = 7;
-            GlobalVariable.BoardW = 7;
+            GlobalVariable.BoardH = 5;
+            GlobalVariable.BoardW = 5;
 
             PlayerViewController1.PlayerInfo = GlobalVariable.Players[0];
             PlayerViewController2.PlayerInfo = GlobalVariable.Players[1];
@@ -47,6 +49,10 @@ namespace JSF.SettingPage
         {
             yield return FriendsSelectorController.ShowSelector(playerID, friendsPos);
             (playerID == 0 ? PlayerViewController1 : PlayerViewController2).Refresh();
+        }
+        public IEnumerator PlayWhiteOutEffect()
+        {
+            yield return WhiteOutEffectController.PlayWhiteIn();
         }
     }
 
