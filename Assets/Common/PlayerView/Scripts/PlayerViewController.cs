@@ -152,7 +152,14 @@ namespace JSF.Common.PlayerView
 
         private IEnumerator OnClickFriendFunc(int id)
         {
-            yield return OnClickFriend(id);
+            if (OnClickFriend != null)
+            {
+                yield return OnClickFriend(id);
+            }
+            else
+            {
+                yield return null;
+            }
         }
 
         public void Refresh()
