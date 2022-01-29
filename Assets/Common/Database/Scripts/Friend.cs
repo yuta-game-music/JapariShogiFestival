@@ -1,18 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEditor;
 using JSF.Game;
-using JSF.Game.Board;
+using JSF.Game.Player;
+using System.Linq;
+using System;
 
 namespace JSF.Database
 {
-    
-    public abstract class Friend : ScriptableObject
+
+    [CreateAssetMenu(fileName = "Friend.asset", menuName = "JSF/Friends/FriendData")]
+    public class Friend : ScriptableObject
     {
-        public abstract string Name { get; }
-        public abstract Dictionary<Vector2,MovementSettings> GetMovementSheet();
-        public virtual IEnumerator MoveNormal(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard)
+        public string Name;
+        public IEnumerator MoveNormal(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard)
         {
             var animation_name = "MoveForward";
 
@@ -30,7 +32,375 @@ namespace JSF.Database
             yield return friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to, RotationDirectionUtil.CalcRotationDegreeFromVector(-(to-from)));
             friendsOnBoard.Animator.SetBool(animation_name, false);
         }
-        public abstract IEnumerator OnUseSkill(Vector2Int from, Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager);
+        public IEnumerator OnUseSkill(Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager)
+        {
+            Vector2Int from = friendOnBoard.Pos.Value;
+            RotationDirection fromDir = friendOnBoard.Dir;
+
+            yield return GameManager.PlayCutIn(this);
+            friendOnBoard.transform.SetParent(GameManager.EffectObject, true);
+
+            Vector2Int RelativePos = RotationDirectionUtil.GetRelativePos(friendOnBoard.Pos.Value, friendOnBoard.Dir, to);
+            SkillMap? _SkillMap = friendOnBoard.Friend.GetSkillMapByPos(RelativePos);
+            if (_SkillMap.HasValue)
+            {
+                var SkillMap = _SkillMap.Value;
+                if (SkillMap.ActionDescriptor?.FriendAction == null)
+                {
+                    throw new Exception("Invalid skill detected! " + Name + "/"+SkillMap.Name+" does not have any ActionDescriptor or FriendAction!");
+                }
+                foreach (var Action in SkillMap.ActionDescriptor.FriendAction)
+                {
+                    switch (Action.ActionType)
+                    {
+                        case FriendActionType.PlayAnimation:
+                            {
+                                friendOnBoard.Animator.SetBool("Skill", true);
+                                int layer_id = friendOnBoard.Animator.GetLayerIndex("Skill");
+                                // Animation
+                                if (Action.Animation_Animation)
+                                {
+                                    friendOnBoard.Animator.runtimeAnimatorController = Action.Animation_Animation;
+                                }
+
+                                Vector2Int diff = to - friendOnBoard.Pos.Value;
+
+                                // Weight
+                                float layerWeight = 1;
+                                if (Action.Animation_UseWeight)
+                                {
+                                    Debug.Log(diff + ": " + diff.magnitude);
+                                    layerWeight = diff.magnitude * 0.01f;
+                                }
+                                friendOnBoard.Animator.SetLayerWeight(layer_id, layerWeight);
+
+                                // Rotation
+                                Quaternion rot = Quaternion.FromToRotation(Vector3.up, new Vector3(diff.x, diff.y, 0));
+                                switch (Action.Animation_RotationMode)
+                                {
+                                    case FriendAction.Animation_RotationType.Toward:
+                                        rot = Quaternion.FromToRotation(Vector3.up, new Vector3(diff.x, diff.y, 0));
+                                        break;
+                                    case FriendAction.Animation_RotationType.Now:
+                                        rot = Quaternion.identity;
+                                        break;
+                                    case FriendAction.Animation_RotationType.New:
+                                        {
+                                            var aim_rot = RotationDirectionUtil.CalcRotationDegreeFromVector(diff);
+                                            var rot_diff = RotationDirectionUtil.Merge(aim_rot, RotationDirectionUtil.Invert(friendOnBoard.Dir));
+                                            rot = Quaternion.Euler(0, 0, RotationDirectionUtil.GetRotationDegree(rot_diff));
+                                        }
+                                        break;
+                                    case FriendAction.Animation_RotationType.Fixed:
+                                        {
+                                            var rot_diff = RotationDirectionUtil.Merge(RotationDirection.FORWARD, RotationDirectionUtil.Invert(friendOnBoard.Dir));
+                                            rot = Quaternion.Euler(0, 0, RotationDirectionUtil.GetRotationDegree(rot_diff));
+                                        }
+                                        break;
+                                }
+                                friendOnBoard.ViewerTF.transform.localRotation = rot;
+                                // Wait
+                                if (Action.Animation_WaitForEnd)
+                                {
+                                    yield return new WaitUntil(() => friendOnBoard.Animator.GetCurrentAnimatorStateInfo(2).IsName("SkillEnd"));
+                                }
+                            }
+                            break;
+                        case FriendActionType.ResetAnimation:
+                            {
+                                friendOnBoard.Animator.SetBool("Skill", false);
+                            }
+                            break;
+                        case FriendActionType.MoveToCell:
+                            {
+                                Vector2Int to_pos = RotationDirectionUtil.GetRotatedVector(Action.MoveToCell_MoveDestinationRelative,friendOnBoard.Dir);
+                                if (Action.MoveToCell_AddClickedPos)
+                                {
+                                    to_pos += to;
+                                }
+                                else
+                                {
+                                    to_pos += friendOnBoard.Pos.Value;
+                                }
+                                if(!GameManager.Map.TryGetValue(to_pos, out var cell))
+                                {
+                                    // 行けないセルに行こうとしたので中止
+                                }else if (cell.RotationOnly)
+                                {
+                                    // 行けないセルに行こうとしたので中止
+                                }
+                                else
+                                {
+                                    yield return GameManager.MoveFriend(
+                                        friendOnBoard, to_pos, friendOnBoard.Dir, false,
+                                        GetGoToLoungeOf(GameManager, Action, GetCellFriendPossessor(GameManager, to_pos)));
+                                }
+                            }
+                            break;
+                        case FriendActionType.Rotate:
+                            {
+                                RotationDirection dir;
+                                switch (Action.Rotate_RelativeTo)
+                                {
+                                    case FriendAction.Rotation_RelativeTo.Toward:
+                                        dir = RotationDirectionUtil.CalcRotationDegreeFromVector(from-to);
+                                        break;
+                                    case FriendAction.Rotation_RelativeTo.Base:
+                                        dir = fromDir;
+                                        break;
+                                    case FriendAction.Rotation_RelativeTo.Now:
+                                        dir = friendOnBoard.Dir;
+                                        break;
+                                    case FriendAction.Rotation_RelativeTo.Fixed:
+                                    default:
+                                        dir = GameManager.PlayerInTurn.Direction;
+                                        break;
+                                }
+                                dir = RotationDirectionUtil.Merge(dir, Action.Rotate_RotationDirection);
+                                yield return GameManager.MoveFriend(
+                                    friendOnBoard, friendOnBoard.Pos.Value, dir, false, null);
+                            }
+                            break;
+                        case FriendActionType.MoveToLounge:
+                            {
+                                Vector2Int to_pos = RotationDirectionUtil.GetRotatedVector(Action.MoveToLounge_MoveDestinationRelative, friendOnBoard.Dir);
+                                if (Action.MoveToLounge_AddClickedPos)
+                                {
+                                    to_pos += to;
+                                }
+                                else
+                                {
+                                    to_pos += friendOnBoard.Pos.Value;
+                                }
+                                if(GameManager.Map.TryGetValue(to_pos, out var cell) && cell.Friends)
+                                {
+                                    yield return GameManager.MoveToLounge(
+                                        cell.Friends,
+                                        GetGoToLoungeOf(
+                                            GameManager,
+                                            Action,
+                                            GetCellFriendPossessor(GameManager,to_pos)
+                                        )
+                                    );
+                                }
+                            }
+                            break;
+                        case FriendActionType.EndTurn:
+                            yield return GameManager.OnTurnPass();
+                            yield break;
+                    }
+                    if (Action.WaitSec > 0)
+                    {
+                        yield return new WaitForSeconds(Action.WaitSec);
+                    }
+                }
+                yield break;
+            }
+            else
+            {
+                throw new Exception("Invalid skill detected! " + Name + " does not have skill on " + RelativePos+"!");
+            }
+        }
+
+        // スキルが発動できる場所にいるか
+        public bool CanUseSkill(Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager)
+        {
+            Vector2Int from = friendOnBoard.Pos.Value;
+            RotationDirection fromDir = friendOnBoard.Dir;
+
+            Vector2Int RelativePos = RotationDirectionUtil.GetRelativePos(friendOnBoard.Pos.Value, friendOnBoard.Dir, to);
+            SkillMap? _SkillMap = friendOnBoard.Friend.GetSkillMapByPos(RelativePos);
+            if (_SkillMap.HasValue)
+            {
+                var SkillMap = _SkillMap.Value;
+                if (SkillMap.ActionDescriptor?.FriendAction == null)
+                {
+                    Debug.LogWarning("Invalid skill detected! " + Name + "/" + SkillMap.Name + " does not have any ActionDescriptor or FriendAction!");
+                    return false;
+                }
+                Vector2Int SimulatedPos = friendOnBoard.Pos.Value;
+                RotationDirection SimulatedDir = friendOnBoard.Dir;
+
+                foreach (var Action in SkillMap.ActionDescriptor.FriendAction)
+                {
+                    switch (Action.ActionType)
+                    {
+                        case FriendActionType.PlayAnimation:
+                            break;
+                        case FriendActionType.ResetAnimation:
+                            break;
+                        case FriendActionType.MoveToCell:
+                            {
+                                Vector2Int to_pos = RotationDirectionUtil.GetRotatedVector(Action.MoveToCell_MoveDestinationRelative, SimulatedDir);
+                                if (Action.MoveToCell_AddClickedPos)
+                                {
+                                    to_pos += to;
+                                }
+                                else
+                                {
+                                    to_pos += SimulatedPos;
+                                }
+                                if (!GameManager.Map.TryGetValue(to_pos, out var cell))
+                                {
+                                    // 行けないセルに行こうとしたので中止
+                                    return false;
+                                }
+                                else if (cell.RotationOnly)
+                                {
+                                    // 行けないセルに行こうとしたので中止
+                                    return false;
+                                }
+                                else
+                                {
+                                    SimulatedPos = to_pos;
+                                }
+                            }
+                            break;
+                        case FriendActionType.Rotate:
+                            {
+                                RotationDirection dir;
+                                switch (Action.Rotate_RelativeTo)
+                                {
+                                    case FriendAction.Rotation_RelativeTo.Toward:
+                                        dir = RotationDirectionUtil.CalcRotationDegreeFromVector(from - to);
+                                        break;
+                                    case FriendAction.Rotation_RelativeTo.Base:
+                                        dir = fromDir;
+                                        break;
+                                    case FriendAction.Rotation_RelativeTo.Now:
+                                        dir = SimulatedDir;
+                                        break;
+                                    case FriendAction.Rotation_RelativeTo.Fixed:
+                                    default:
+                                        dir = GameManager.PlayerInTurn.Direction;
+                                        break;
+                                }
+                                SimulatedDir = RotationDirectionUtil.Merge(dir, Action.Rotate_RotationDirection);
+                            }
+                            break;
+                        case FriendActionType.MoveToLounge:
+                            break;
+                        case FriendActionType.EndTurn:
+                            return true;
+                    }
+                }
+
+                return true;
+            }
+            else
+            {
+                // スキルが発動できない箇所で調査しようとした
+                Debug.LogWarning("Friend "+friendOnBoard.Friend.Name+" has no skill at "+RelativePos);
+                return false;
+            }
+        }
+
+        private Player GetGoToLoungeOf(GameManager GameManager, FriendAction Action, Player ToCellPossessor)
+        {
+            var in_turn = GameManager.PlayerInTurn;
+            Player LoungePlayer = in_turn;
+            switch (Action.LoungeDestinationMode)
+            {
+                case FriendAction.LoungeDestinationType.Mine:
+                    return in_turn;
+                case FriendAction.LoungeDestinationType.Opponent:
+                    if (in_turn.PlayerInfo.HasValue)
+                    {
+                        if (in_turn.PlayerInfo.Value.ID == 0)
+                        {
+                            return GameManager.Players.Where((p) => p.PlayerInfo.HasValue && p.PlayerInfo.Value.ID == 1).First();
+                        }
+                        else if (in_turn.PlayerInfo.Value.ID == 1)
+                        {
+                            return GameManager.Players.Where((p) => p.PlayerInfo.HasValue && p.PlayerInfo.Value.ID == 0).First();
+                        }
+                        else
+                        {
+                            // 未定義のプレイヤー(仮に現在のプレイヤーにしておく)
+                            Debug.LogError("Unknown Player!",in_turn);
+                            return in_turn;
+                        }
+                    }
+                    else
+                    {
+                        // セルリアンのため未定義(一応セルリアンにしておく)
+                        Debug.LogWarning("Cellien cannot move to opponent's lounge!");
+                        return GameManager.Players[1];
+                    }
+                case FriendAction.LoungeDestinationType.Possessor:
+                    return ToCellPossessor;
+                case FriendAction.LoungeDestinationType.OpponentOfPossessor:
+                    if (ToCellPossessor.PlayerInfo.HasValue)
+                    {
+                        if (ToCellPossessor.PlayerInfo.Value.ID == 0)
+                        {
+                            return GameManager.Players.Where((p) => p.PlayerInfo.HasValue && p.PlayerInfo.Value.ID == 1).First();
+                        }
+                        else if (ToCellPossessor.PlayerInfo.Value.ID == 1)
+                        {
+                            return GameManager.Players.Where((p) => p.PlayerInfo.HasValue && p.PlayerInfo.Value.ID == 0).First();
+                        }
+                        else
+                        {
+                            // 未定義のプレイヤー(仮に現在のプレイヤーにしておく)
+                            Debug.LogError("Unknown Player!", in_turn);
+                            return in_turn;
+                        }
+                    }
+                    else
+                    {
+                        // セルリアンのためセルリアンに
+                        return GameManager.Players[1];
+                    }
+                default:
+                    // 未定義の対象(仮に現在のプレイヤーにしておく)
+                    Debug.LogError("Unknown Destination Type ("+Action.LoungeDestinationMode+")!", in_turn);
+                    return in_turn;
+            }
+        }
+        private Player GetCellFriendPossessor(GameManager GameManager, Vector2Int Pos)
+        {
+            if(GameManager.Map.TryGetValue(Pos, out var cell))
+            {
+                if (cell.Friends)
+                {
+                    return cell.Friends.Possessor;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("No Cell at ("+Pos+")!");
+                return null;
+            }
+        }
+        // 指定された場所に通常スキルで移動できるか
+        public bool CanNormalMove(Vector2Int diff)
+        {
+            return NormalMoveMap.Where((p) => p == diff).Any();
+        }
+
+        // 指定された方向に向けるか
+        public bool CanRotateTo(Vector2Int diff)
+        {
+            RotationDirection dir = RotationDirectionUtil.CalcRotationDegreeFromVector(-diff);
+            return NormalRotationMap.Where((d) => d == dir).Any();
+        }
+        // 場所からSkillを探す
+        public SkillMap? GetSkillMapByPos(Vector2Int pos)
+        {
+            foreach(var Skill in Skills)
+            {
+                if (Skill.Pos.Where((p) => p == pos).Any())
+                {
+                    return Skill;
+                }
+            }
+            return null;
+        }
 
         public Sprite OnBoardImage;
         public Sprite CutInImage;
@@ -40,6 +410,11 @@ namespace JSF.Database
         public string[] WinnersMessage;
         public string[] LosersMessage;
         public string[] DrawMessage;
+
+        public Vector2Int[] NormalMoveMap;
+        public RotationDirection[] NormalRotationMap;
+        public SkillMap[] Skills;
+
     }
 
 }

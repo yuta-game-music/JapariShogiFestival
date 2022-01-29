@@ -10,16 +10,16 @@ namespace JSF.Database
     {
         public Friend[] Friends;
 
-        public Friend GetFriend<T>() where T : Friend
+        public Friend GetFriend(string name)
         {
             foreach(var Friend in Friends)
             {
-                if(Friend is T ft)
+                if(Friend.Name == name)
                 {
                     return Friend;
                 }
             }
-            Debug.LogError("Friend "+nameof(T)+" not found! Maybe you have to refresh "+nameof(FriendsDatabase)+".");
+            Debug.LogError("Friend "+name+" not found! Maybe you have to refresh "+nameof(FriendsDatabase)+".");
             return null;
         }
 
