@@ -11,6 +11,8 @@ namespace JSF.Game.Player
         public PlayerType PlayerType = PlayerType.User;
         public PlayerInfo? PlayerInfo;
 
+        public RotationDirection Direction = RotationDirection.FORWARD;
+
         public FriendOnBoard Leader { get => get_leader(); set => set_leader(value); }
         [SerializeField]
         private FriendOnBoard _leader;
@@ -56,7 +58,7 @@ namespace JSF.Game.Player
 
             if(PlayerType == PlayerType.Cellien)
             {
-                NameText.enabled = true;
+                NameText.enabled = false;
             }
             else
             {

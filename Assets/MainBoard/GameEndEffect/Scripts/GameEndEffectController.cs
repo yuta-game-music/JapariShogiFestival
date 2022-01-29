@@ -31,8 +31,11 @@ namespace JSF.Game.Effect
 
         public void SetWinner(Player.Player Player)
         {
-            if (BackgroundImage) { BackgroundImage.color = Color.Lerp(Color.white, Player.PlayerColor, 0.2f); }
-            if (Image) { Image.sprite = Player.Leader.Friend.CutInImage; }
+            if (Player)
+            {
+                if (BackgroundImage) { BackgroundImage.color = Color.Lerp(Color.white, Player.PlayerColor, 0.2f); }
+                if (Image) { Image.sprite = Player.Leader.Friend.CutInImage; }
+            }
         }
         public bool AnimationEnd { get => Animator.GetCurrentAnimatorStateInfo(0).IsName("GameEndEffectEnd"); }
     }

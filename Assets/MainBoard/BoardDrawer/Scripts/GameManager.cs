@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using JSF.Game.UI;
 using JSF.Game.Board;
-using JSF.Database.Friends;
 using UnityEngine.SceneManagement;
 
 namespace JSF.Game
@@ -38,12 +37,14 @@ namespace JSF.Game
                 Players[2 * i].PlayerInfo = GlobalVariable.Players[i];
                 Players[2 * i].PlayerName = GlobalVariable.Players[i].Name;
                 Players[2 * i].PlayerType = GlobalVariable.Players[i].PlayerType;
+                Players[2 * i].Direction = GlobalVariable.Players[i].Direction;
                 Players[2 * i].Init();
             }
             // Playersの奇数番目には必ず同一のオブジェクトCellienが入っている
             Players[1].PlayerInfo = null;
             Players[1].PlayerName = "セルリアン軍";
             Players[1].PlayerType = Player.PlayerType.Cellien;
+            Players[1].Direction = RotationDirection.LEFT;
             Players[1].Init();
             if (GlobalVariable.DebugMode)
             {
@@ -124,11 +125,11 @@ namespace JSF.Game
                 return false;
             }
         }
-        public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to, RotationDirection dir, bool TurnPass=false)
+        public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to, RotationDirection dir, bool TurnPass=false, Player.Player GoToLoungeOf=null)
         {
             if (Map.TryGetValue(to, out Cell cell_to))
             {
-                yield return MoveFriend(friendOnBoard, cell_to, dir, TurnPass);
+                yield return MoveFriend(friendOnBoard, cell_to, dir, TurnPass, GoToLoungeOf);
             }
             else
             {
@@ -151,7 +152,10 @@ namespace JSF.Game
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
                 yield return friendOnBoard.Friend.MoveNormal(friendOnBoard.Pos.Value, cell_to.SelfPos, friendOnBoard);
-                if (TurnPass) { yield return OnTurnPass(); }
+                if (TurnPass)
+                {
+                    yield return OnTurnPass();
+                }
             }
             else
             {
@@ -159,7 +163,7 @@ namespace JSF.Game
             }
             yield return null;
         }
-        public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Cell cell_to, RotationDirection dir, bool TurnPass)
+        public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Cell cell_to, RotationDirection dir, bool TurnPass, Player.Player GoToLoungeOf=null)
         {
             if (friendOnBoard?.Pos == null)
             {
@@ -175,7 +179,7 @@ namespace JSF.Game
             {
                 if (cell_to.Friends != null && cell_to.Friends != friendOnBoard)
                 {
-                    yield return cell_to.Friends.GoToLounge(PlayerInTurn);
+                    yield return MoveToLounge(cell_to.Friends, GoToLoungeOf);
                 }
                 cell_from.Friends = null;
                 friendOnBoard.MoveToCell(cell_to);
@@ -196,6 +200,10 @@ namespace JSF.Game
             }
             yield return null;
         }
+        public IEnumerator MoveToLounge(FriendOnBoard friendOnBoard, Player.Player GoToLoungeOf = null)
+        {
+            yield return friendOnBoard.GoToLounge(GoToLoungeOf ?? PlayerInTurn);
+        }
 
         public IEnumerator UseSkill(FriendOnBoard friendOnBoard, Cell cell_to)
         {
@@ -210,27 +218,24 @@ namespace JSF.Game
                 throw new System.Exception("Friends not on any Cell!");
             }
             Vector2Int RelativePos = RotationDirectionUtil.GetRelativePos(friendOnBoard.Pos.Value, friendOnBoard.Dir, cell_to.SelfPos);
-            if (!friendOnBoard.Friend.GetMovementSheet().TryGetValue(RelativePos, out MovementSettings movementSettings))
+            SkillMap? _SkillMap = friendOnBoard.Friend.GetSkillMapByPos(RelativePos);
+            if (!_SkillMap.HasValue)
             {
                 // スキル使用不可の場所を指定してしまった
                 throw new System.Exception("This Friends cannot go to "+RelativePos+"!");
             }
-            if (!movementSettings.CanEffectBySkill)
-            {
-                // スキル使用不可の場所を指定してしまった
-                throw new System.Exception("This Friends cannot use skill to " + RelativePos + "!");
-            }
-            if (PlayerInTurn.SandstarAmount < movementSettings.NeededSandstarForSkill)
+            SkillMap SkillMap = _SkillMap.Value;
+            if (PlayerInTurn.SandstarAmount < SkillMap.NeededSandstar)
             {
                 // サンドスター不足
-                throw new System.Exception("Not Enough Sandstar! Needed: " + movementSettings.NeededSandstarForSkill + " Having:" + PlayerInTurn.SandstarAmount);
+                throw new System.Exception("Not Enough Sandstar! Needed: " + SkillMap.NeededSandstar + " Having:" + PlayerInTurn.SandstarAmount);
             }
-            PlayerInTurn.SandstarAmount -= movementSettings.NeededSandstarForSkill;
+            PlayerInTurn.SandstarAmount -= SkillMap.NeededSandstar;
 
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
-                yield return friendOnBoard.Friend.OnUseSkill(friendOnBoard.Pos.Value, cell_to.SelfPos, friendOnBoard, this);
-                yield return OnTurnPass();
+                yield return friendOnBoard.Friend.OnUseSkill(cell_to.SelfPos, friendOnBoard, this);
+                //yield return OnTurnPass();
             }
             else
             {
@@ -273,13 +278,17 @@ namespace JSF.Game
 
         public IEnumerator OnTurnPass()
         {
+            // サンドスター補給 TODO:SandstarParameterを使う
+            PlayerInTurn.SandstarAmount += 1;
+
+            // ターンを次に進める
             PlayerInTurnID = (PlayerInTurnID + 1) % Players.Length;
             // 条件チェック
             if(DoesAnyoneWin(out Player.Player Winner))
             {
                 Debug.Log("Winner: "+Winner);
                 yield return GameUI.PlayFinish(Winner);
-                GlobalVariable.Winner = Winner.PlayerInfo;
+                GlobalVariable.Winner = Winner?.PlayerInfo;
                 SceneManager.LoadScene("ResultPage");
             }
             else
@@ -313,17 +322,16 @@ namespace JSF.Game
                 Candidate = player;
             }
 
-            // 勝利候補がいればその人の勝ち、いなければまだ続く
+            // 勝利候補がいればその人の勝ち、いなければ引き分け
             if (Candidate != null)
             {
                 Winner = Candidate;
-                return true;
             }
             else
             {
                 Winner = null;
-                return false;
             }
+            return true;
         }
     }
 }

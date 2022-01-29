@@ -5,7 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using JSF.Database;
-using JSF.Database.Friends;
 using JSF.Game.UI;
 
 namespace JSF.Game.Board

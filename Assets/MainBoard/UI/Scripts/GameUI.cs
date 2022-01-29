@@ -104,29 +104,37 @@ namespace JSF.Game.UI
                 // 盤上のフレンズを選択している場合
                 Vector2Int diff = cell.SelfPos - SelectedFriendOnBoard.Pos.Value;
                 diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(SelectedFriendOnBoard.Dir));
-                if (SelectedFriendOnBoard.Friend.GetMovementSheet().TryGetValue(diff, out MovementSettings movement_settings))
+                if (UIMode == UIMode.Move && SelectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
                 {
-                    if (UIMode == UIMode.Move && movement_settings.CanMoveNormal && !cell.RotationOnly)
+                    // フレンズをcellに動かす
+                    StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, cell, null, true));
+                    return true;
+                }
+                else if (UIMode == UIMode.Rotate && SelectedFriendOnBoard.Friend.CanRotateTo(diff))
+                {
+                    // 回転
+                    StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, SelectedFriendOnBoard.Cell, RotationDirectionUtil.CalcRotationDegreeFromVector(SelectedFriendOnBoard.Pos.Value - cell.SelfPos), false));
+                    return true;
+                }
+                else if (UIMode == UIMode.Skill && !cell.RotationOnly)
+                {
+                    var Skill = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
+                    if (Skill.HasValue)
                     {
-                        // フレンズをcellに動かす
-                        StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, cell, null, true));
-                        return true;
-                    }
-                    else if (UIMode == UIMode.Rotate && movement_settings.CanRotateToward)
-                    {
-                        // 回転
-                        StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, SelectedFriendOnBoard.Cell, RotationDirectionUtil.CalcRotationDegreeFromVector(SelectedFriendOnBoard.Pos.Value - cell.SelfPos), false));
-                        return true;
-                    }
-                    else if (UIMode == UIMode.Skill && movement_settings.CanEffectBySkill && !cell.RotationOnly)
-                    {
-                        if (movement_settings.NeededSandstarForSkill > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        if (Skill.Value.NeededSandstar > SelectedFriendOnBoard.Possessor.SandstarAmount)
                         {
                             return false;
                         }
-                        // スキル発動
-                        StartCoroutine(UseSkillCoroutine(SelectedFriendOnBoard, cell));
-                        return true;
+                        if(SelectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, SelectedFriendOnBoard, GameManager))
+                        {
+                            // スキル発動
+                            StartCoroutine(UseSkillCoroutine(SelectedFriendOnBoard, cell));
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
                     }
                 }
             }
@@ -155,12 +163,9 @@ namespace JSF.Game.UI
             SelectedFriendOnBoard = friend;
             Vector2Int diff = to.SelfPos - from.SelfPos;
             diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(friend.Dir));
-            if(friend.Friend.GetMovementSheet().TryGetValue(diff, out MovementSettings movement_settings))
+            if(friend.Friend.CanNormalMove(diff))
             {
-                if (movement_settings.CanMoveNormal)
-                {
-                    StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, to, null, true));
-                }
+                StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, to, null, true));
             }
         }
 
@@ -214,51 +219,63 @@ namespace JSF.Game.UI
                 }
                 Vector2Int diff = cell.SelfPos - SelectedFriendOnBoard.Pos.Value;
                 diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(SelectedFriendOnBoard.Dir));
-                if (SelectedFriendOnBoard.Friend.GetMovementSheet().TryGetValue(diff, out MovementSettings movement_settings))
+
+                if (UIMode==UIMode.Move && SelectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
                 {
-                    if (UIMode==UIMode.Move && !cell.RotationOnly && movement_settings.CanMoveNormal)
+                    return CellDrawStatus.CanMove;
+                }
+                else if(UIMode == UIMode.Rotate && SelectedFriendOnBoard.Friend.CanRotateTo(diff))
+                {
+                    return CellDrawStatus.CanRotate;
+                }
+                else if (UIMode == UIMode.Skill && !cell.RotationOnly)
+                {
+                    var _skillMap = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
+                    if (_skillMap.HasValue)
                     {
-                        return CellDrawStatus.CanMove;
-                    }
-                    else if(UIMode == UIMode.Rotate && movement_settings.CanRotateToward)
-                    {
-                        return CellDrawStatus.CanRotate;
-                    }
-                    else if (UIMode == UIMode.Skill && !cell.RotationOnly && movement_settings.CanEffectBySkill)
-                    {
-                        if (movement_settings.NeededSandstarForSkill > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        var skillMap = _skillMap.Value;
+                        if (skillMap.NeededSandstar > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        {
+                            disabled = true;
+                        }
+                        if(!SelectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, SelectedFriendOnBoard, GameManager))
                         {
                             disabled = true;
                         }
                         return CellDrawStatus.CanEffectBySkill;
-                    }
-                    else if (UIMode == UIMode.View)
-                    {
-                        disabled = true;
-                        if (movement_settings.CanMoveNormal)
-                        {
-                            return CellDrawStatus.CanMove;
-                        }
-                        else if (movement_settings.CanRotateToward)
-                        {
-                            return CellDrawStatus.CanRotate;
-                        }
-                        else if (movement_settings.CanEffectBySkill)
-                        {
-                            return CellDrawStatus.CanEffectBySkill;
-                        }
-                        else
-                        {
-                            disabled = false;
-                            return CellDrawStatus.Normal;
-                        }
                     }
                     else
                     {
                         return CellDrawStatus.CannotUse;
                     }
                 }
-                return CellDrawStatus.CannotUse;
+                else if (UIMode == UIMode.View)
+                {
+                    disabled = true;
+                    if (SelectedFriendOnBoard.Friend.CanNormalMove(diff))
+                    {
+                        return CellDrawStatus.CanMove;
+                    }
+                    else if (SelectedFriendOnBoard.Friend.CanRotateTo(diff))
+                    {
+                        return CellDrawStatus.CanRotate;
+                    }
+
+                    var _skillMap = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
+                    if (_skillMap.HasValue)
+                    {
+                        return CellDrawStatus.CanEffectBySkill;
+                    }
+                    else
+                    {
+                        disabled = false;
+                        return CellDrawStatus.Normal;
+                    }
+                }
+                else
+                {
+                    return CellDrawStatus.CannotUse;
+                }
             }
             else
             {

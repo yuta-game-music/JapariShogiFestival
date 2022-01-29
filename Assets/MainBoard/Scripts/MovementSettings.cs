@@ -1,9 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using System;
 
 namespace JSF.Game
 {
+    [Obsolete]
     public struct MovementSettings
     {
         public bool CanMoveNormal;

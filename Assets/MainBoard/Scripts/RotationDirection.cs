@@ -1,9 +1,10 @@
 using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 namespace JSF.Game
 {
+    [Serializable]
     public enum RotationDirection
     {
         FORWARD, FORWARD_LEFT, LEFT, BACKWARD_LEFT, BACKWARD, BACKWARD_RIGHT, RIGHT, FORWARD_RIGHT
@@ -11,6 +12,10 @@ namespace JSF.Game
 
     public class RotationDirectionUtil
     {
+        public static readonly string[] DirectionNames = new string[]
+        {
+            "前","左前","左","左後ろ","後ろ","右後ろ","右","右前"
+        };
         public static RotationDirection RotateLeft(RotationDirection base_rot, int step)
         {
             return (RotationDirection)(((int)base_rot + step) % 8);
