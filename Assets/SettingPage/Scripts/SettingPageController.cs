@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using JSF.Common.PlayerView;
 using JSF.Database;
-using JSF.Database.Friends;
 using JSF.Common.FriendsSelector;
 using JSF.Common.UI;
 
@@ -24,9 +23,12 @@ namespace JSF.SettingPage
             {
                 GlobalVariable.Players[i].Name = "プレイヤー"+(i+1);
                 GlobalVariable.Players[i].Friends = new Friend[]{
-                    FriendsDatabase.Get().GetFriend<Serval>(),
-                    FriendsDatabase.Get().GetFriend<Serval>(),
-                    FriendsDatabase.Get().GetFriend<Serval>(),
+                    FriendsDatabase.Get().GetFriend("サーバル"),
+                    FriendsDatabase.Get().GetFriend("サーバル"),
+                    FriendsDatabase.Get().GetFriend("サーバル"),
+                    FriendsDatabase.Get().GetFriend("サーバル"),
+                    FriendsDatabase.Get().GetFriend("サーバル"),
+                    FriendsDatabase.Get().GetFriend("サーバル"),
                 };
             }
             GlobalVariable.BoardH = 5;

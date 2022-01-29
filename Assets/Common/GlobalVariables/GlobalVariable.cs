@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using JSF.Game.Player;
 using JSF.Database;
-using JSF.Database.Friends;
+using JSF.Game;
 
 namespace JSF
 {
@@ -37,8 +37,10 @@ namespace JSF
         public string Name;
         public PlayerType PlayerType;
         public Color PlayerColor;
+        public RotationDirection Direction;
         public Friend Leader { get => (Friends!=null && Friends.Length>0) ? Friends[0] : null; }
         public Friend[] Friends;
+
 
         public PlayerInfo(int id, string name, PlayerType playerType, Color playerColor, Friend[] friends)
         {
@@ -47,6 +49,7 @@ namespace JSF
             PlayerType = playerType;
             PlayerColor = playerColor;
             Friends = friends;
+            Direction = id == 0 ? RotationDirection.FORWARD : RotationDirection.BACKWARD;
         }
 
         public bool Equals(PlayerInfo x, PlayerInfo y)
