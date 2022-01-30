@@ -17,8 +17,9 @@ namespace JSF.Common.FriendsSelector
         public FriendsSelectorController Controller;
         private RectTransform TF;
 
-        private void Start()
+        public new void Start()
         {
+            base.Start();
             TF = GetComponent<RectTransform>();
         }
 

@@ -52,9 +52,9 @@ namespace JSF.SettingPage
             yield return FriendsSelectorController.ShowSelector(playerID, friendsPos);
             (playerID == 0 ? PlayerViewController1 : PlayerViewController2).Refresh();
         }
-        public IEnumerator PlayWhiteOutEffect()
+        public IEnumerator PlayWhiteOutEffect(float? whiteOutEffectLengthOverride = null)
         {
-            yield return WhiteOutEffectController.PlayWhiteIn();
+            yield return WhiteOutEffectController.PlayWhiteIn(whiteOutEffectLengthOverride);
         }
     }
 

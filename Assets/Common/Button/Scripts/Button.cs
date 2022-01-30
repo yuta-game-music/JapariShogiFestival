@@ -35,7 +35,7 @@ namespace JSF.Common.UI
         {
             Image.color = NormalColor;
         }
-        private void Start()
+        public void Start()
         {
             Image.color = NormalColor;
         }

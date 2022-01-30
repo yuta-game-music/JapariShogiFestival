@@ -20,8 +20,9 @@ namespace JSF.Common.FriendsSelector
                 StartCoroutine(OnClickFriend.Invoke(0));
             }
         }
-        private void Start()
+        public new void Start()
         {
+            base.Start();
             TF = GetComponent<RectTransform>();
         }
         private void Update()
