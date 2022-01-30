@@ -25,8 +25,9 @@ namespace JSF.Common.UI
         }
 
         // ”’‚­‚·‚é
-        public IEnumerator PlayWhiteIn()
+        public IEnumerator PlayWhiteIn(float? whiteInTimeOverwrite = null)
         {
+            Animator.SetFloat("WhiteInSpeed", 1 / Mathf.Max(whiteInTimeOverwrite ?? WhiteInTime, 0.01f));
             Animator.SetBool("WhiteOut", true);
             yield return new WaitUntil(() => Animator.GetCurrentAnimatorStateInfo(layer_id).IsName("WhiteOut"));
         }
