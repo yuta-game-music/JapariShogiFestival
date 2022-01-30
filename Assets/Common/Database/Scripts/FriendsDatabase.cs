@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 namespace JSF.Database
 {
@@ -9,6 +12,7 @@ namespace JSF.Database
     public class FriendsDatabase : ScriptableObject
     {
         public Friend[] Friends;
+        private static FriendsDatabase _static_db;
 
         public Friend GetFriend(string name)
         {
@@ -25,10 +29,26 @@ namespace JSF.Database
 
         public static FriendsDatabase Get()
         {
-            return AssetDatabase.LoadAssetAtPath<FriendsDatabase>("Assets/Common/Database/Friends/FriendsDatabase.asset");
+#if UNITY_EDITOR
+            if (Application.platform == RuntimePlatform.WindowsEditor)
+            {
+                return AssetDatabase.LoadAssetAtPath<FriendsDatabase>("Assets/Common/Database/Friends/FriendsDatabase.asset");
+            }
+#endif
+            if (_static_db) { return _static_db; }
+
+            var myLoadedAssetBundle
+            = AssetBundle.LoadFromFile(Path.Combine(Application.streamingAssetsPath, "Database", "friends"));
+            if (myLoadedAssetBundle == null)
+            {
+                Debug.Log("Failed to load AssetBundle!");
+                return null;
+            }
+            _static_db = myLoadedAssetBundle.LoadAsset<FriendsDatabase>("FriendsDatabase");
+            return _static_db;
         }
     }
-
+#if UNITY_EDITOR
     [CustomEditor(typeof(FriendsDatabase))]
     public class FriendsDatabaseEditor: Editor
     {
@@ -62,4 +82,5 @@ namespace JSF.Database
             DrawDefaultInspector();
         }
     }
+#endif
 }
