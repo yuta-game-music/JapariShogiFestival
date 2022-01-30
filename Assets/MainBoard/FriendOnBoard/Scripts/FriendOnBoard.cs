@@ -127,6 +127,7 @@ namespace JSF.Game
         }
     }
 
+#if UNITY_EDITOR
     [CustomEditor(typeof(FriendOnBoard))]
     public class FriendOnBoardEditor : Editor
     {
@@ -144,4 +145,5 @@ namespace JSF.Game
             }
         }
     }
+#endif
 }
