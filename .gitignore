@@ -62,3 +62,6 @@ crashlytics-build.properties
 # Server Util and Compiling Scripts
 /Assets/ServerUtil/
 /Assets/ServerUtil.meta
+
+# Memo
+/Collaboration
