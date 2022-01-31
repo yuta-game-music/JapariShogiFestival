@@ -28,7 +28,7 @@ namespace JSF.Common.FriendsSelector
             for(var i = 0; i < Friends.Length; i++)
             {
                 var cellObj = Instantiate(FriendCellPrefab);
-                cellObj.transform.SetParent(FriendsGrid, true);
+                cellObj.transform.SetParent(FriendsGrid, false);
                 
                 var cellController = cellObj.GetComponent<FriendsCellController>();
                 cellController.Friend = Friends[i];

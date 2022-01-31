@@ -265,7 +265,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
+  m_fontSize: 14.4
   m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -344,7 +344,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1417232264167580552
 MonoBehaviour:
@@ -488,6 +488,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PlayerName: Player
   PlayerType: 0
+  Direction: 0
   _leader: {fileID: 0}
   PlayerColor: {r: 0, g: 0, b: 0, a: 0}
   SandstarAmount: 0

@@ -23,11 +23,11 @@ namespace JSF.Common.PlayerView
 
         private void Update()
         {
-            tf = tf ?? GetComponent<RectTransform>();
+            /*tf = tf ?? GetComponent<RectTransform>();
             if (tf)
             {
                 tf.localScale = new Vector3(tf.rect.height / tf.rect.width, 1, 1);
-            }
+            }*/
         }
     }
 
