@@ -218,6 +218,7 @@ namespace JSF.Database
                 {
                     height = GetPropertyHeight(property, label)
                 };
+                
                 GUI.Box(BackgroundRect,"", GUI.skin.box);
 
                 // ƒRƒ}ƒ“ƒhŽí—Þ

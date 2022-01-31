@@ -32,7 +32,7 @@ namespace JSF.Database
 #if UNITY_EDITOR
             if (Application.platform == RuntimePlatform.WindowsEditor)
             {
-                return AssetDatabase.LoadAssetAtPath<FriendsDatabase>("Assets/Common/Database/Friends/FriendsDatabase.asset");
+                return _static_db = AssetDatabase.LoadAssetAtPath<FriendsDatabase>("Assets/Common/Database/Friends/FriendsDatabase.asset");
             }
 #endif
             if (_static_db) { return _static_db; }
