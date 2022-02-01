@@ -62,6 +62,9 @@ crashlytics-build.properties
 # Server Util and Compiling Scripts
 /Assets/ServerUtil/
 /Assets/ServerUtil.meta
+/Packages/SSH.NET.2020.0.1/
+/ProjectSettings/SceneTemplateSettings.json
+/packages.config
 
 # Memo
 /Collaboration
