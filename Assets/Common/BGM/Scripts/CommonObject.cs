@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using JSF.Database;
 
-namespace JSF.BGM
+namespace JSF.Common
 {
     public class CommonObject : MonoBehaviour
     {
