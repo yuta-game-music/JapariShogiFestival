@@ -415,6 +415,10 @@ namespace JSF.Database
         public RotationDirection[] NormalRotationMap;
         public SkillMap[] Skills;
 
+        #region Credit
+        public string AuthorName;
+        public Sprite AuthorImage;
+        #endregion
     }
 
 }
