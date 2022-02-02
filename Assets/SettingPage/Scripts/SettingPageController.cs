@@ -21,9 +21,7 @@ namespace JSF.SettingPage
         // Start is called before the first frame update
         void Start()
         {
-#if UNITY_EDITOR
             CheckPlayerData();
-#endif
 
             PlayerViewController1.PlayerInfo = GlobalVariable.Players[0];
             PlayerViewController2.PlayerInfo = GlobalVariable.Players[1];
@@ -54,7 +52,6 @@ namespace JSF.SettingPage
 
             yield return new WaitUntil(() => GameSettingsPageAnimation.GetCurrentAnimatorStateInfo(layer_id).IsName(visible ? "Shown" : "Hidden"));
         }
-#if UNITY_EDITOR
         private void CheckPlayerData()
         {
             if (GlobalVariable.Players == null)
@@ -65,7 +62,7 @@ namespace JSF.SettingPage
             {
                 if (GlobalVariable.Players[i].Friends == null)
                 {
-                    GlobalVariable.Players[i].Name = "仮プレイヤー" + i;
+                    GlobalVariable.Players[i].Name = "プレイヤー" + i;
                     GlobalVariable.Players[i].ID = i;
                     GlobalVariable.Players[i].PlayerColor = i == 0 ? Color.red : Color.blue;
                     GlobalVariable.Players[i].PlayerType = PlayerType.User;
@@ -79,7 +76,6 @@ namespace JSF.SettingPage
                 }
             }
         }
-#endif
     }
 
 }
