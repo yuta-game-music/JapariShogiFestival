@@ -5,6 +5,8 @@ using JSF.Common.PlayerView;
 using JSF.Database;
 using JSF.Common.FriendsSelector;
 using JSF.Common.UI;
+using JSF.Game;
+using JSF.Game.Player;
 
 namespace JSF.SettingPage
 {
@@ -15,24 +17,13 @@ namespace JSF.SettingPage
         public PlayerViewController PlayerViewController2;
 
         public FriendsSelectorController FriendsSelectorController;
+        public Animator GameSettingsPageAnimation;
         // Start is called before the first frame update
         void Start()
         {
-            GlobalVariable.InitialSandstar = 0;
-            for(var i = 0; i < 2; i++)
-            {
-                GlobalVariable.Players[i].Name = "プレイヤー"+(i+1);
-                GlobalVariable.Players[i].Friends = new Friend[]{
-                    FriendsDatabase.Get().GetFriend("サーバル"),
-                    FriendsDatabase.Get().GetFriend("サーバル"),
-                    FriendsDatabase.Get().GetFriend("サーバル"),
-                    FriendsDatabase.Get().GetFriend("サーバル"),
-                    FriendsDatabase.Get().GetFriend("サーバル"),
-                    FriendsDatabase.Get().GetFriend("サーバル"),
-                };
-            }
-            GlobalVariable.BoardH = 5;
-            GlobalVariable.BoardW = 5;
+#if UNITY_EDITOR
+            CheckPlayerData();
+#endif
 
             PlayerViewController1.PlayerInfo = GlobalVariable.Players[0];
             PlayerViewController2.PlayerInfo = GlobalVariable.Players[1];
@@ -56,6 +47,39 @@ namespace JSF.SettingPage
         {
             yield return WhiteOutEffectController.PlayWhiteIn(whiteOutEffectLengthOverride);
         }
+        public IEnumerator SetGameSettingsPageVisible(bool visible)
+        {
+            var layer_id = GameSettingsPageAnimation.GetLayerIndex("ShowHide");
+            GameSettingsPageAnimation.SetBool("Show", visible);
+
+            yield return new WaitUntil(() => GameSettingsPageAnimation.GetCurrentAnimatorStateInfo(layer_id).IsName(visible ? "Shown" : "Hidden"));
+        }
+#if UNITY_EDITOR
+        private void CheckPlayerData()
+        {
+            if (GlobalVariable.Players == null)
+            {
+                GlobalVariable.Players = new PlayerInfo[2];
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                if (GlobalVariable.Players[i].Friends == null)
+                {
+                    GlobalVariable.Players[i].Name = "仮プレイヤー" + i;
+                    GlobalVariable.Players[i].ID = i;
+                    GlobalVariable.Players[i].PlayerColor = i == 0 ? Color.red : Color.blue;
+                    GlobalVariable.Players[i].PlayerType = PlayerType.User;
+                    GlobalVariable.Players[i].Direction = i == 0 ? RotationDirection.FORWARD : RotationDirection.BACKWARD;
+                    GlobalVariable.Players[i].Friends = new Friend[]
+                    {
+                        FriendsDatabase.Get().Friends[0],
+                        FriendsDatabase.Get().Friends[0],
+                        FriendsDatabase.Get().Friends[0],
+                    };
+                }
+            }
+        }
+#endif
     }
 
 }
