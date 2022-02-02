@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace JSF.Title
+namespace JSF.Common
 {
     [ExecuteAlways]
-    public class CreditSizeAdjuster : MonoBehaviour
+    public class VerticalListSizeAdjuster : MonoBehaviour
     {
         RectTransform tf;
         // Start is called before the first frame update
