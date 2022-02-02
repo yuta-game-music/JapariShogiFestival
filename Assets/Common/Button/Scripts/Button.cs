@@ -13,6 +13,7 @@ namespace JSF.Common.UI
         public Color ClickedColor = new Color(1,0.7f,0.7f);
 
         public Image Image;
+        public AudioClip ClickSound;
         public void SetAllColor(Color NormalColor)
         {
             this.NormalColor = NormalColor;
@@ -23,6 +24,7 @@ namespace JSF.Common.UI
         public void OnPointerClick(PointerEventData eventData)
         {
             Image.color = ClickedColor;
+            Util.PlaySE(ClickSound);
             OnClick();
         }
 
