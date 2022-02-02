@@ -429,7 +429,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Japari Shogi Festival \u30AF\u30EC\u30B8\u30C3\u30C8\n<size=20>\u203B\u5404\u30D5\u30EC\u30F3\u30BA\u306E\u30AF\u30EC\u30B8\u30C3\u30C8\u306F\u4E0B\u90E8\u306B\u3042\u308A\u307E\u3059</size>\n\n\u539F\u4F5C\n\u3051\u3082\u306E\u30D5\u30EC\u30F3\u30BA\u30D7\u30ED\u30B8\u30A7\u30AF\u30C8\n<size=20>\u203B\u672C\u4F5C\u306F\u4E8C\u6B21\u5275\u4F5C\u30AC\u30A4\u30C9\u30E9\u30A4\u30F3\u306B\u57FA\u3065\u304D\u5236\u4F5C\u3057\u3066\u3044\u307E\u3059</size>\n\n\u30D7\u30ED\u30C0\u30AF\u30C8\u30DE\u30CD\u30FC\u30B8\u30E3\u30FC\n\u3086\u30FC\u305F\n\n\u30D5\u30A9\u30F3\u30C8\n\u30B3\u30FC\u30DD\u30EC\u30FC\u30C8\u30FB\u30ED\u30B4\uFF08\u30E9\u30A6\u30F3\u30C9\uFF09\nCopyright
     \xA9 2022 LOGOTYPE.JP.\n\nBGM\n\u30BF\u30A4\u30C8\u30EBBGM\u300CFestival! with
-    Friends\u300D\n\u4F5C\u66F2\uFF1A\u3086\u30FC\u305F\n\n\u52B9\u679C\u97F3\n(\u6E96\u5099\u4E2D)\u203B\u9AD8\u3055\u8ABF\u6574\n\n\u30D5\u30EC\u30F3\u30BA"
+    Friends\u300D\n\u4F5C\u66F2\uFF1A\u3086\u30FC\u305F\n\n\u52B9\u679C\u97F3\n\u52B9\u679C\u97F3\u30E9\u30DC\n\n\u30D5\u30EC\u30F3\u30BA"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: bd20a6106a1a8c0428f0c72ad8d90997, type: 2}
   m_sharedMaterial: {fileID: 7161463838912150714, guid: bd20a6106a1a8c0428f0c72ad8d90997, type: 2}
@@ -817,6 +817,7 @@ MonoBehaviour:
   HoveredColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 900681883}
+  ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
   Controller: {fileID: 1452470661}
 --- !u!1 &981250521
 GameObject:
@@ -1614,7 +1615,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -1695,6 +1696,7 @@ MonoBehaviour:
   HoveredColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 1689213675}
+  ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
   Controller: {fileID: 1452470661}
 --- !u!114 &1689213675
 MonoBehaviour:
@@ -2149,6 +2151,7 @@ GameObject:
   - component: {fileID: 1908360304}
   - component: {fileID: 1908360303}
   - component: {fileID: 1908360302}
+  - component: {fileID: 1908360305}
   m_Layer: 5
   m_Name: Credits
   m_TagString: Untagged
@@ -2247,6 +2250,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1908360300}
   m_CullTransparentMesh: 1
+--- !u!114 &1908360305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1908360300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5b19e697e72e7442a4a8f08840d16d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1957915455
 GameObject:
   m_ObjectHideFlags: 0

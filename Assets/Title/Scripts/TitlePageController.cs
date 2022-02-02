@@ -17,8 +17,8 @@ namespace JSF.Title
         }
         public IEnumerator SetCreditPageVisible(bool visible)
         {
-            var layer_id = CreditPageAnimation.GetLayerIndex("CreditShowHide");
-            CreditPageAnimation.SetBool("CreditShow", visible);
+            var layer_id = CreditPageAnimation.GetLayerIndex("ShowHide");
+            CreditPageAnimation.SetBool("Show", visible);
 
             yield return new WaitUntil(() => CreditPageAnimation.GetCurrentAnimatorStateInfo(layer_id).IsName(visible ? "Shown" : "Hidden"));
         }
