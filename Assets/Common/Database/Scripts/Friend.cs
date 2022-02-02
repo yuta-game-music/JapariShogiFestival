@@ -29,8 +29,8 @@ namespace JSF.Database
             friendsOnBoard.ViewerTF.transform.localRotation = Quaternion.Euler(0, 0, rot_base.z);
 
             yield return new WaitUntil(() => friendsOnBoard.Animator.GetCurrentAnimatorStateInfo(layer_id).IsName("WaitingForControl"));
-            yield return friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to, RotationDirectionUtil.CalcRotationDegreeFromVector(-(to-from)));
             friendsOnBoard.Animator.SetBool(animation_name, false);
+            yield return friendsOnBoard.GameManager.MoveFriend(friendsOnBoard, to, RotationDirectionUtil.CalcRotationDegreeFromVector(-(to-from)));
         }
         public IEnumerator OnUseSkill(Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager)
         {
@@ -386,6 +386,7 @@ namespace JSF.Database
         // Žw’è‚³‚ê‚½•ûŒü‚ÉŒü‚¯‚é‚©
         public bool CanRotateTo(Vector2Int diff)
         {
+            if (diff.magnitude >= 2) { return false; }
             RotationDirection dir = RotationDirectionUtil.CalcRotationDegreeFromVector(-diff);
             return NormalRotationMap.Where((d) => d == dir).Any();
         }
