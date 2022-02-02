@@ -14,9 +14,16 @@ namespace JSF
         #endregion
 
         #region BoardInfo
-        public static int BoardW = 4;
-        public static int BoardH = 4;
+        public static readonly int MIN_BOARD_W = 3;
+        public static readonly int MAX_BOARD_W = 10;
+        public static readonly int MIN_BOARD_H = 3;
+        public static readonly int MAX_BOARD_H = 10;
+
+        public static int BoardW = 5;
+        public static int BoardH = 5;
+        public static int BoardRealmHeight = 1;//é©êwóÃàÊ
         public static int InitialSandstar = 0;
+        public static int NeededSandstarForPlacingNewFriend = 5;
         #endregion
 
         #region PlayerInfo
@@ -28,6 +35,11 @@ namespace JSF
 
         #region GameResultInfo
         public static PlayerInfo? Winner;
+        #endregion
+
+        #region Config
+        public static float BGMVolume = 0.5f;
+        public static float SEVolume = 0.5f;
         #endregion
     }
 
