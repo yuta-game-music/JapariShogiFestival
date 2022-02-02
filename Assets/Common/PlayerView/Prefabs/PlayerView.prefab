@@ -806,6 +806,7 @@ MonoBehaviour:
   HoveredColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 4703871845475687466}
+  ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
   ImageTF: {fileID: 2739648609469298086}
 --- !u!1 &5628333949306786331
 GameObject:

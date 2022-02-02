@@ -85,6 +85,7 @@ MonoBehaviour:
   HoveredColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 3991384325696903456}
+  ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
   PosID: 1
   FriendImage: {fileID: 6131144231629150003}
 --- !u!222 &977726834102886036
