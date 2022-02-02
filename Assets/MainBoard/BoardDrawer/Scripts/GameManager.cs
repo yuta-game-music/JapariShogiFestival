@@ -27,6 +27,11 @@ namespace JSF.Game
 
         public void Start()
         {
+            // (デバッグ用)プレイヤー情報が入っていなければデフォルトを読み込む
+#if UNITY_EDITOR
+            CheckPlayerData();
+#endif
+
             // 盤面設定
             BoardRenderer.W = GlobalVariable.BoardW;
             BoardRenderer.H = GlobalVariable.BoardH;
@@ -38,6 +43,7 @@ namespace JSF.Game
                 Players[2 * i].PlayerName = GlobalVariable.Players[i].Name;
                 Players[2 * i].PlayerType = GlobalVariable.Players[i].PlayerType;
                 Players[2 * i].Direction = GlobalVariable.Players[i].Direction;
+                Players[2 * i].SandstarAmount = GlobalVariable.InitialSandstar;
                 Players[2 * i].Init();
             }
             // Playersの奇数番目には必ず同一のオブジェクトCellienが入っている
@@ -66,12 +72,20 @@ namespace JSF.Game
                     if (p.PlayerInfo.Value.Friends.Length <= i) { continue; }
 
                     Vector2Int pos;
+                    int trial = 0;
                     do
                     {
-                        pos = new Vector2Int(Random.Range(0, BoardRenderer.W), Random.Range(0, BoardRenderer.H / 2));
+                        pos = new Vector2Int(Random.Range(0, GlobalVariable.BoardW), Random.Range(0, GlobalVariable.BoardRealmHeight));
                         if (player_full_on_downside)
                         {
-                            pos += new Vector2Int(0, (BoardRenderer.H + 1) / 2);
+                            pos.y *= -1;
+                            pos += new Vector2Int(0, GlobalVariable.BoardH-1);
+                        }
+                        trial++;
+                        if (trial > 10000)
+                        {
+                            Debug.LogError("Friend cannot be placed!");
+                            break;
                         }
                     } while (!Map.TryGetValue(pos, out Cell cell) || cell.Friends != null);
                     PlaceFriend(
@@ -95,35 +109,86 @@ namespace JSF.Game
             enabled = false;
         }
 
-        public bool PlaceFriend(Vector2Int pos, RotationDirection dir, Friend friend, Player.Player possessor, bool isLeader)
+        public bool PlaceFriend(Vector2Int pos, RotationDirection dir, Friend friend, Player.Player possessor, bool isLeader, bool tryOnly = false)
         {
             if(Map.TryGetValue(pos, out Cell Cell))
             {
                 if (Cell.Friends == null)
                 {
-                    GameObject friendOnBoardObject = Instantiate(FriendOnBoardPrefab);
-                    friendOnBoardObject.transform.SetParent(Cell.transform, false);
-                    friendOnBoardObject.transform.localPosition = Vector3.zero;
-                    FriendOnBoard friendOnBoard = friendOnBoardObject.GetComponent<FriendOnBoard>();
-                    friendOnBoard.Friend = friend;
-                    friendOnBoard.InitialSetup(Cell, dir, possessor, isLeader);
+                    if (!tryOnly)
+                    {
+                        GameObject friendOnBoardObject = Instantiate(FriendOnBoardPrefab);
+                        friendOnBoardObject.transform.SetParent(Cell.transform, false);
+                        friendOnBoardObject.transform.localPosition = Vector3.zero;
+                        FriendOnBoard friendOnBoard = friendOnBoardObject.GetComponent<FriendOnBoard>();
+                        friendOnBoard.Friend = friend;
+                        friendOnBoard.InitialSetup(Cell, dir, possessor, isLeader);
 
-                    Cell.Friends = friendOnBoard;
-                    Debug.Log("Placed friend " + friendOnBoard.Friend.Name + ": " + pos +" rot="+dir.ToString());
+                        Cell.Friends = friendOnBoard;
+                        Debug.Log("Placed friend " + friendOnBoard.Friend.Name + ": " + pos + " rot=" + dir.ToString());
+                    }
 
                     return true;
                 }
                 else
                 {
-                    Debug.LogError("Friends Already Exists!", Cell);
+                    if (!tryOnly) {
+                        Debug.LogError("Friends Already Exists!", Cell);
+                    }
                     return false;
                 }
             }
             else
             {
-                Debug.LogError("No such coordinate: " + pos);
+                if (!tryOnly)
+                {
+                    Debug.LogError("No such coordinate: " + pos);
+                }
                 return false;
             }
+        }
+        public bool PlaceFriendFromLounge(FriendOnBoard Friend, Cell to, bool tryOnly = false)
+        {
+            // 完全新規のフレンズとして出す
+            switch (PlayerInTurn.Direction)
+            {
+                case RotationDirection.FORWARD:
+                    if (to.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                    {
+                        // 領域外
+                        if (!tryOnly)
+                        {
+                            Debug.LogError("Out of Realm!");
+                        }
+                        return false;
+                    }
+                    break;
+                case RotationDirection.BACKWARD:
+                    if (GlobalVariable.BoardH - 1 - to.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                    {
+                        // 領域外
+                        if (!tryOnly)
+                        {
+                            Debug.LogError("Out of Realm!");
+                        }
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+            }
+            if (PlaceFriend(to.SelfPos, Friend.Possessor.Direction, Friend.Friend, Friend.Possessor, tryOnly))
+            {
+                if (!tryOnly)
+                {
+                    // フレンズをセルごと消す
+                    Destroy(Friend.Cell.gameObject);
+                    Friend.Possessor.SandstarAmount -= GlobalVariable.NeededSandstarForPlacingNewFriend;
+                    StartCoroutine(OnTurnPass());
+                }
+                return true;
+            }
+            return false;
         }
         public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to, RotationDirection dir, bool TurnPass=false, Player.Player GoToLoungeOf=null)
         {
@@ -165,7 +230,7 @@ namespace JSF.Game
         }
         public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Cell cell_to, RotationDirection dir, bool TurnPass, Player.Player GoToLoungeOf=null)
         {
-            if (friendOnBoard?.Pos == null)
+            if (friendOnBoard?.Cell == null)
             {
                 // friendOnBoardが指定されていない
                 throw new System.Exception("Friends not designated!");
@@ -177,16 +242,16 @@ namespace JSF.Game
             }
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
+                cell_from.Friends = null;
+                friendOnBoard.MoveToCell(cell_to);
+                friendOnBoard.transform.SetParent(cell_to.transform, false);
+                friendOnBoard.transform.localPosition = Vector3.zero;
+                friendOnBoard.SetDir(dir);
                 if (cell_to.Friends != null && cell_to.Friends != friendOnBoard)
                 {
                     yield return MoveToLounge(cell_to.Friends, GoToLoungeOf);
                 }
-                cell_from.Friends = null;
-                friendOnBoard.MoveToCell(cell_to);
                 cell_to.Friends = friendOnBoard;
-                friendOnBoard.transform.SetParent(cell_to.transform, false);
-                friendOnBoard.transform.localPosition = Vector3.zero;
-                friendOnBoard.SetDir(dir);
                 Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
 
                 if (TurnPass)
@@ -307,7 +372,7 @@ namespace JSF.Game
                     // セルリアンは対象外
                     continue;
                 }
-                if (player.Leader.Cell == null)
+                if (player.Leader.Pos == null)
                 {
                     // 大将フレンズがロビーに移動した：プレイヤーは負けている
                     continue;
@@ -333,5 +398,32 @@ namespace JSF.Game
             }
             return true;
         }
+
+#if UNITY_EDITOR
+        private void CheckPlayerData()
+        {
+            if (GlobalVariable.Players == null)
+            {
+                GlobalVariable.Players = new PlayerInfo[2];
+            }
+            for (int i= 0; i < 2; i++)
+            {
+                if (GlobalVariable.Players[i].Friends == null)
+                {
+                    GlobalVariable.Players[i].Name = "仮プレイヤー" + i;
+                    GlobalVariable.Players[i].ID = i;
+                    GlobalVariable.Players[i].PlayerColor = i == 0 ? Color.red : Color.blue;
+                    GlobalVariable.Players[i].PlayerType = Player.PlayerType.User;
+                    GlobalVariable.Players[i].Direction = i == 0 ? RotationDirection.FORWARD : RotationDirection.BACKWARD;
+                    GlobalVariable.Players[i].Friends = new Friend[]
+                    {
+                        FriendsDatabase.Get().Friends[0],
+                        FriendsDatabase.Get().Friends[0],
+                        FriendsDatabase.Get().Friends[0],
+                    };
+                }
+            }
+        }
+#endif
     }
 }

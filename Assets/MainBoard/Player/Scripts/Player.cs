@@ -59,6 +59,8 @@ namespace JSF.Game.Player
             if(PlayerType == PlayerType.Cellien)
             {
                 NameText.enabled = false;
+                LeaderBackgroundImage.enabled = false;
+                LeaderImage.enabled = false;
             }
             else
             {

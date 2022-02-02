@@ -418,7 +418,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -972,7 +972,7 @@ RectTransform:
   m_GameObject: {fileID: 1092370884}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children:
   - {fileID: 1926335199}
   - {fileID: 1756198744}
@@ -1509,7 +1509,9 @@ MonoBehaviour:
   WaitButton: {fileID: 61056079}
   CutInPrefab: {fileID: 4420833748743932893, guid: 0859ac29d339de549805ebd99a0a0bc8, type: 3}
   GameEndPrefab: {fileID: 4420833748743932893, guid: 5a256f8c5dfb1fc44995155a41f4613a, type: 3}
+  LoungeCellPrefab: {fileID: 7756227435654500600, guid: 34a26647329b70042a2ebf557e698e2a, type: 3}
   whiteOutEffectController: {fileID: 4430887784873038537}
+  ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
   SelectedFriendOnBoard: {fileID: 0}
   UIMode: 0
   CanInteract: 1
@@ -2768,6 +2770,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1350290823}
     m_Modifications:
+    - target: {fileID: 320465065754436034, guid: 564093b43a6894849a8643ad6bbda843, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1775077768553544398, guid: 564093b43a6894849a8643ad6bbda843, type: 3}
       propertyPath: PlayerColor.a
       value: 1

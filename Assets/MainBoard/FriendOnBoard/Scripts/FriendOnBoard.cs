@@ -18,7 +18,7 @@ namespace JSF.Game
         public Image LeaderFrameViewer;
         public Player.Player Possessor { get; private set; }
         public bool IsLeader { get; private set; }
-        public Vector2Int? Pos { get => Cell?.SelfPos; }
+        public Vector2Int? Pos { get => (!(Cell is LoungeCell)) ? (Cell?.SelfPos) : null; }
         public Cell Cell { get; private set; }
         public RotationDirection Dir { get; private set; }
 
@@ -67,13 +67,24 @@ namespace JSF.Game
             if (isLeader)
             {
                 possessor.Leader = this;
-                LeaderFrameViewer.color = Color.Lerp(possessor.PlayerColor, Color.black, 0.2f);
+            }
+            SetFrameColor(possessor.PlayerColor, isLeader);
+            _init = true;
+        }
+        private void SetFrameColor(Color color, bool isLeader)
+        {
+            if (isLeader)
+            {
+                SetFrameColor(Color.Lerp(color, Color.black, 0.2f));
             }
             else
             {
-                LeaderFrameViewer.color = Color.Lerp(possessor.PlayerColor, Color.white, 0.6f);
+                SetFrameColor(Color.Lerp(color, Color.white, 0.6f));
             }
-            _init = true;
+        }
+        private void SetFrameColor(Color color)
+        {
+            LeaderFrameViewer.color = color;
         }
         public void Rotate(RotationDirection diff)
         {
@@ -104,7 +115,6 @@ namespace JSF.Game
         public IEnumerator GoToLounge(Player.Player player)
         {
             yield return GoToLoungeCoroutine(player);
-            Cell = null;
             SetDir(RotationDirection.FORWARD);
         }
         private IEnumerator GoToLoungeCoroutine(Player.Player player)
@@ -121,7 +131,24 @@ namespace JSF.Game
                 transform.localRotation = Quaternion.Euler(0,0,rate*360*3);
                 yield return new WaitForFixedUpdate();
             }
-            transform.SetParent(player.Lounge, false);
+
+            GameObject LoungeCellObject = Instantiate(GameManager.GameUI.LoungeCellPrefab);
+            LoungeCellObject.transform.SetParent(player.Lounge, false);
+            LoungeCellObject.transform.localPosition = Vector3.zero;
+            LoungeCellObject.transform.localRotation = Quaternion.Euler(0,0,RotationDirectionUtil.GetRotationDegree(player.Direction));
+
+            LoungeCell LoungeCell = LoungeCellObject.GetComponent<LoungeCell>();
+            if (!LoungeCell) {
+                Debug.LogError("No LoungeCell attached to LoungeCellObject!", GameManager.GameUI.LoungeCellPrefab);
+            }
+            else
+            {
+                LoungeCell.Setup(player, this);
+                this.Cell = LoungeCell;
+            }
+            Possessor = player;
+            SetFrameColor(player.PlayerColor, false);
+            transform.SetParent(LoungeCell.transform, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
         }

@@ -78,7 +78,8 @@ namespace JSF.Game.Board
         // Update is called once per frame
         void Update()
         {
-            tf.sizeDelta = Vector2.one * (Mathf.Min(SizeReferenceTF.rect.width, SizeReferenceTF.rect.height)*0.9f);
+            Vector2 size = new Vector2(W+2, H+2)/Mathf.Max(W+2,H+2);
+            tf.sizeDelta = size * (Mathf.Min(SizeReferenceTF.rect.width, SizeReferenceTF.rect.height)*0.98f);
         }
     }
 

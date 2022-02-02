@@ -59,7 +59,7 @@ namespace JSF.Game
         }
 
         // vecÇ©ÇÁç≈Ç‡ãﬂÇ¢rotation-degreeÇåvéZÇ∑ÇÈ
-        public static RotationDirection CalcRotationDegreeFromVector(Vector2Int vec)
+        public static RotationDirection CalcRotationDegreeFromVector(Vector2 vec)
         {
             if (vec.x == 0 && vec.y == 0) { return RotationDirection.FORWARD; }
             var d = (Mathf.Atan2(vec.y,vec.x)*Mathf.Rad2Deg+180)%360;

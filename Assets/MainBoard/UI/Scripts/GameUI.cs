@@ -2,9 +2,14 @@ using JSF.Common.UI;
 using JSF.Database;
 using JSF.Game.Board;
 using JSF.Game.Effect;
+using JSF.Common;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace JSF.Game.UI
 {
@@ -18,7 +23,10 @@ namespace JSF.Game.UI
 
         public GameObject CutInPrefab;
         public GameObject GameEndPrefab;
+        public GameObject LoungeCellPrefab;
         public WhiteOutEffectController whiteOutEffectController;
+
+        public AudioClip ClickSound;
 
         [SerializeField]
         private FriendOnBoard SelectedFriendOnBoard;
@@ -31,6 +39,7 @@ namespace JSF.Game.UI
 
         public void OnClickEmptyCell(Cell cell)
         {
+            Util.PlaySE(ClickSound);
             if (OnClickCell(cell))
             {
 
@@ -43,6 +52,7 @@ namespace JSF.Game.UI
 
         public void OnClickFriendsOnBoard(FriendOnBoard friend)
         {
+            Util.PlaySE(ClickSound);
             if (OnClickCell(friend.Cell))
             {
 
@@ -123,7 +133,8 @@ namespace JSF.Game.UI
                     {
                         if (Skill.Value.NeededSandstar > SelectedFriendOnBoard.Possessor.SandstarAmount)
                         {
-                            return false;
+                            // TODO:サンドスター不足のメッセージ
+                            return true;
                         }
                         if(SelectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, SelectedFriendOnBoard, GameManager))
                         {
@@ -133,7 +144,8 @@ namespace JSF.Game.UI
                         }
                         else
                         {
-                            return false;
+                            // TODO:スキル使用不可のメッセージ
+                            return true;
                         }
                     }
                 }
@@ -141,6 +153,11 @@ namespace JSF.Game.UI
             else
             {
                 // TODO: 駒台のフレンズを選択している場合
+                if (GameManager.PlayerInTurn.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
+                {
+                    GameManager.PlaceFriendFromLounge(SelectedFriendOnBoard, cell);
+                    return true;
+                }
             }
             return false;
         }
@@ -149,6 +166,7 @@ namespace JSF.Game.UI
         {
             if (CanInteract)
             {
+                Util.PlaySE(ClickSound);
                 StartCoroutine(GameManager.SkipTurn());
                 return true;
             }
@@ -157,15 +175,57 @@ namespace JSF.Game.UI
                 return false;
             }
         }
-
-        public void OnDragAndDropFriendsOnBoard(FriendOnBoard friend, Cell from, Cell to)
+        public void OnStartDragFriendOnBoard(FriendOnBoard friend, Cell from)
         {
+            friend.transform.SetParent(transform, true);
             SelectedFriendOnBoard = friend;
-            Vector2Int diff = to.SelfPos - from.SelfPos;
-            diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(friend.Dir));
-            if(friend.Friend.CanNormalMove(diff))
+        }
+        public void OnDraggingFriendOnBoard(FriendOnBoard friend, Vector2 cursorPos)
+        {
+            friend.transform.position = new Vector3(cursorPos.x, cursorPos.y, 0);
+        }
+        public void OnDragAndDropFriendOnBoard(FriendOnBoard friend, Cell from, Cell to)
+        {
+            SelectedFriendOnBoard = null;
+            friend.transform.SetParent(from.transform, false);
+            friend.transform.localPosition = Vector3.zero;
+            if(friend.Cell is LoungeCell)
             {
-                StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, to, null, true));
+                if (to != null)
+                {
+                    if (friend.Possessor.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
+                    {
+                        GameManager.PlaceFriendFromLounge(friend, to);
+                    }
+                }
+            }
+            else
+            {
+                Vector2Int diff = to.SelfPos - from.SelfPos;
+                diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(friend.Dir));
+                if ((UIMode == UIMode.Move || UIMode == UIMode.View) && friend.Friend.CanNormalMove(diff) && !to.RotationOnly)
+                {
+                    StartCoroutine(MoveFriendCoroutine(friend, to, null, false));
+                }
+                else if ((UIMode == UIMode.Rotate || UIMode == UIMode.View) && friend.Friend.CanRotateTo(diff))
+                {
+                    StartCoroutine(MoveFriendCoroutine(friend, from,
+                        RotationDirectionUtil.Merge(friend.Dir, RotationDirectionUtil.CalcRotationDegreeFromVector(-diff)), false));
+                }
+                else if ((UIMode == UIMode.Skill || UIMode == UIMode.View) && !to.RotationOnly && friend.Friend.CanUseSkill(to.SelfPos, friend, GameManager))
+                {
+                    var _Skill = friend.Friend.GetSkillMapByPos(diff);
+                    if (_Skill.HasValue)
+                    {
+                        var Skill = _Skill.Value;
+                        if (Skill.NeededSandstar > friend.Possessor.SandstarAmount)
+                        {
+                            // TODO:サンドスター不足のメッセージ
+                            return;
+                        }
+                        StartCoroutine(UseSkillCoroutine(friend, to));
+                    }
+                }
             }
         }
 
@@ -207,6 +267,32 @@ namespace JSF.Game.UI
                 if (!SelectedFriendOnBoard.Pos.HasValue)
                 {
                     // TODO:駒台のフレンズを選択しているとき
+                    switch (GameManager.PlayerInTurn.Direction)
+                    {
+                        case RotationDirection.FORWARD:
+                            if (cell.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                            {
+                                // 領域外
+                                return CellDrawStatus.CannotUse;
+                            }
+                            break;
+                        case RotationDirection.BACKWARD:
+                            if (GlobalVariable.BoardH - 1 - cell.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                            {
+                                // 領域外
+                                return CellDrawStatus.CannotUse;
+                            }
+                            break;
+                        default:
+                            return CellDrawStatus.CannotUse;
+                    }
+                    if(GameManager.PlayerInTurn.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
+                    {
+                    }
+                    else
+                    {
+                        disabled = true;
+                    }
                     return CellDrawStatus.Normal;
                 }
                 if (SelectedFriendOnBoard.Pos == cell.SelfPos)
@@ -252,7 +338,7 @@ namespace JSF.Game.UI
                 else if (UIMode == UIMode.View)
                 {
                     disabled = true;
-                    if (SelectedFriendOnBoard.Friend.CanNormalMove(diff))
+                    if (SelectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
                     {
                         return CellDrawStatus.CanMove;
                     }
@@ -262,14 +348,14 @@ namespace JSF.Game.UI
                     }
 
                     var _skillMap = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
-                    if (_skillMap.HasValue)
+                    if (_skillMap.HasValue && !cell.RotationOnly)
                     {
                         return CellDrawStatus.CanEffectBySkill;
                     }
                     else
                     {
                         disabled = false;
-                        return CellDrawStatus.Normal;
+                        return CellDrawStatus.CannotUse;
                     }
                 }
                 else
@@ -291,6 +377,22 @@ namespace JSF.Game.UI
                 {
                     return CellDrawStatus.Normal;
                 }
+            }
+        }
+
+        public Cell GetCellFromScreenPos(Vector2 pos)
+        {
+            PointerEventData ev = new PointerEventData(EventSystem.current);
+            ev.position = pos;
+
+            List<RaycastResult> result = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(ev, result);
+            try
+            {
+                return result.Select(r => r.gameObject?.GetComponent<Cell>()).First(t => t != null);
+            }catch(InvalidOperationException)
+            {
+                return null;
             }
         }
 
