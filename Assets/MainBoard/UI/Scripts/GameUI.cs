@@ -133,7 +133,7 @@ namespace JSF.Game.UI
                     {
                         if (Skill.Value.NeededSandstar > SelectedFriendOnBoard.Possessor.SandstarAmount)
                         {
-                            // TODO:サンドスター不足のメッセージ
+                            GameManager.PlayerInTurn.PlaySandstarGaugeAnimation(Player.SandstarGaugeStatus.LitRed, Skill.Value.NeededSandstar, 1f);
                             return true;
                         }
                         if(SelectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, SelectedFriendOnBoard, GameManager))
@@ -157,6 +157,10 @@ namespace JSF.Game.UI
                 {
                     GameManager.PlaceFriendFromLounge(SelectedFriendOnBoard, cell);
                     return true;
+                }
+                else
+                {
+                    GameManager.PlayerInTurn.PlaySandstarGaugeAnimation(Player.SandstarGaugeStatus.LitRed, GlobalVariable.NeededSandstarForPlacingNewFriend, 1f);
                 }
             }
             return false;
@@ -187,7 +191,7 @@ namespace JSF.Game.UI
         public void OnDragAndDropFriendOnBoard(FriendOnBoard friend, Cell from, Cell to)
         {
             SelectedFriendOnBoard = null;
-            friend.transform.SetParent(from.transform, false);
+            friend.transform.SetParent(from.transform, true);
             friend.transform.localPosition = Vector3.zero;
             if(friend.Cell is LoungeCell)
             {
@@ -196,6 +200,10 @@ namespace JSF.Game.UI
                     if (friend.Possessor.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
                     {
                         GameManager.PlaceFriendFromLounge(friend, to);
+                    }
+                    else
+                    {
+                        GameManager.PlayerInTurn.PlaySandstarGaugeAnimation(Player.SandstarGaugeStatus.LitRed, GlobalVariable.NeededSandstarForPlacingNewFriend, 1f);
                     }
                 }
             }
@@ -218,9 +226,10 @@ namespace JSF.Game.UI
                     if (_Skill.HasValue)
                     {
                         var Skill = _Skill.Value;
-                        if (Skill.NeededSandstar > friend.Possessor.SandstarAmount)
+                        if (Skill.NeededSandstar > GameManager.PlayerInTurn.SandstarAmount)
                         {
                             // TODO:サンドスター不足のメッセージ
+                            GameManager.PlayerInTurn.PlaySandstarGaugeAnimation(Player.SandstarGaugeStatus.LitRed, Skill.NeededSandstar, 1f);
                             return;
                         }
                         StartCoroutine(UseSkillCoroutine(friend, to));

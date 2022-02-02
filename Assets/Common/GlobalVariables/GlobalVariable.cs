@@ -24,6 +24,7 @@ namespace JSF
         public static int BoardRealmHeight = 1;//©w—Ìˆæ
         public static int InitialSandstar = 0;
         public static int NeededSandstarForPlacingNewFriend = 5;
+        public static int MaxSandstar = 15;
         #endregion
 
         #region PlayerInfo

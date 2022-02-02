@@ -36,6 +36,7 @@ namespace JSF.Game.Player
         public RectTransform LeaderImageTF;
         public Transform Lounge;
         public TMPro.TMP_Text NameText;
+        public SandstarGaugeController SandstarGaugeController;
 
         private void Start()
         {
@@ -66,6 +67,11 @@ namespace JSF.Game.Player
             {
                 NameText.enabled = true;
             }
+        }
+
+        public void PlaySandstarGaugeAnimation(SandstarGaugeStatus status, int amount, float length)
+        {
+            SandstarGaugeController?.PlayGaugeAnimation(status, amount, length);
         }
     }
 

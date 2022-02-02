@@ -8,6 +8,8 @@ namespace JSF.Common
     public class HorizontalListSizeAdjuster : MonoBehaviour
     {
         RectTransform tf;
+        public float AnchorYMin = 0;
+        public float AnchorYMax = 1;
         // Start is called before the first frame update
         void Start()
         {
@@ -38,8 +40,8 @@ namespace JSF.Common
                         w += _w;
                     }
                 }
-                tf.anchorMin = new Vector2(0, 0);
-                tf.anchorMax = new Vector2(0, 1);
+                tf.anchorMin = new Vector2(0, AnchorYMin);
+                tf.anchorMax = new Vector2(0, AnchorYMax);
                 tf.sizeDelta = new Vector2(w, 0);
             }
         }
