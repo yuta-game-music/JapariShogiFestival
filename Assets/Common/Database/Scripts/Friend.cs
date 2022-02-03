@@ -6,6 +6,7 @@ using JSF.Game;
 using JSF.Game.Player;
 using System.Linq;
 using System;
+using UnityEngine.Serialization;
 
 namespace JSF.Database
 {
@@ -13,6 +14,7 @@ namespace JSF.Database
     [CreateAssetMenu(fileName = "Friend.asset", menuName = "JSF/Friends/FriendData")]
     public class Friend : ScriptableObject
     {
+        public string FileName;
         public string Name;
         public IEnumerator MoveNormal(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard)
         {
@@ -404,7 +406,8 @@ namespace JSF.Database
         }
 
         public Sprite OnBoardImage;
-        public Sprite CutInImage;
+        [FormerlySerializedAs("CutInImage")]
+        public Sprite ThumbImage;
         public AnimatorOverrideController AnimatorOverrideController;
 
         public string[] SettingsMessage;

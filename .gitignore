@@ -68,3 +68,6 @@ crashlytics-build.properties
 
 # Memo
 /Collaboration
+
+# Built Files
+/Assets/StreamingAssets/

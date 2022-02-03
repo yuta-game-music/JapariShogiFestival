@@ -8,15 +8,15 @@ using UnityEditor;
 
 namespace JSF.Database
 {
-    [CreateAssetMenu(fileName = nameof(FriendsDatabase)+".asset", menuName = "JSF/Database/" + nameof(FriendsDatabase))]
-    public class FriendsDatabase : ScriptableObject
+    public class FriendsDatabase
     {
-        public Friend[] Friends;
+        private List<Friend> friends = new List<Friend>();
+        public Friend[] Friends { get => friends.ToArray(); }
         private static FriendsDatabase _static_db;
 
         public Friend GetFriend(string name)
         {
-            foreach(var Friend in Friends)
+            foreach(var Friend in friends)
             {
                 if(Friend.Name == name)
                 {
@@ -29,58 +29,51 @@ namespace JSF.Database
 
         public static FriendsDatabase Get()
         {
+            if (_static_db!=null) { return _static_db; }
+            _static_db = new FriendsDatabase();
 #if UNITY_EDITOR
-            if (Application.platform == RuntimePlatform.WindowsEditor)
+            if (Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
             {
-                return _static_db = AssetDatabase.LoadAssetAtPath<FriendsDatabase>("Assets/Common/Database/Friends/FriendsDatabase.asset");
+                string[] files = Directory.GetFiles("Assets/ServerUtil/Database/Friends/", "Friend.asset", SearchOption.AllDirectories);
+                foreach(var file in files)
+                {
+                    Debug.Log(file);
+                    Friend f = AssetDatabase.LoadAssetAtPath<Friend>(file);
+                    if (f != null)
+                    {
+                        _static_db.friends.Add(f);
+                        Debug.Log("Loaded " + f.Name);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("not a friend!");
+                    }
+                }
+                return _static_db;
             }
 #endif
-            if (_static_db) { return _static_db; }
-
-            var myLoadedAssetBundle
-            = AssetBundle.LoadFromFile(Path.Combine(Application.streamingAssetsPath, "Database", "friends"));
-            if (myLoadedAssetBundle == null)
+            // AssetBundlesÇ©ÇÁê∂ê¨
             {
-                Debug.Log("Failed to load AssetBundle!");
-                return null;
+                string[] files = Directory.GetFiles(Path.Combine(Application.streamingAssetsPath, "Database", "Friends"), "*", SearchOption.TopDirectoryOnly);
+                foreach (var file in files)
+                {
+                    if (file.EndsWith(".meta")) { continue; }
+                    var loaded = AssetBundle.LoadFromFile(file);
+                    if (loaded == null)
+                    {
+                        Debug.LogWarning("Failed to load "+file);
+                        continue;
+                    }
+                    Friend f = loaded.LoadAsset<Friend>("friend");
+                    if (f == null)
+                    {
+                        Debug.LogWarning("Failed to load " + file + " (not a friend)");
+                        continue;
+                    }
+                    _static_db.friends.Add(f);
+                }
             }
-            _static_db = myLoadedAssetBundle.LoadAsset<FriendsDatabase>("FriendsDatabase");
             return _static_db;
         }
     }
-#if UNITY_EDITOR
-    [CustomEditor(typeof(FriendsDatabase))]
-    public class FriendsDatabaseEditor: Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            FriendsDatabase db = target as FriendsDatabase;
-
-            if (GUILayout.Button("Refresh"))
-            {
-                string[] paths = AssetDatabase.GetAllAssetPaths();
-                List<Friend> tmp = new List<Friend>();
-                foreach(var path in paths)
-                {
-                    if (!path.StartsWith("Assets/Common/Database/"))
-                    {
-                        continue;
-                    }
-                    if (!path.EndsWith(".asset"))
-                    {
-                        continue;
-                    }
-                    Friend f = AssetDatabase.LoadAssetAtPath<Friend>(path);
-                    if (f)
-                    {
-                        tmp.Add(f);
-                    }
-                }
-                db.Friends = tmp.ToArray();
-            }
-
-            DrawDefaultInspector();
-        }
-    }
-#endif
 }
