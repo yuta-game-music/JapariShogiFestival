@@ -34,7 +34,7 @@ namespace JSF.Game.Effect
             if (Player)
             {
                 if (BackgroundImage) { BackgroundImage.color = Color.Lerp(Color.white, Player.PlayerColor, 0.2f); }
-                if (Image) { Image.sprite = Player.Leader.Friend.CutInImage; }
+                if (Image) { Image.sprite = Player.Leader.Friend.ThumbImage; }
             }
         }
         public bool AnimationEnd { get => Animator.GetCurrentAnimatorStateInfo(0).IsName("GameEndEffectEnd"); }

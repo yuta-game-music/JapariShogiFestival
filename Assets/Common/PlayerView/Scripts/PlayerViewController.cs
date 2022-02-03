@@ -72,7 +72,7 @@ namespace JSF.Common.PlayerView
 
                 // ëÂè´ÉtÉåÉìÉY
                 //LeaderBackgroundTF.sizeDelta = new Vector2(LeaderBackgroundTF.rect.height / LeaderBackgroundTF.rect.width, 1);
-                LeaderThumbImage.sprite = playerInfo.Leader?.CutInImage;
+                LeaderThumbImage.sprite = playerInfo.Leader?.ThumbImage;
                 if (LeaderThumbController)
                 {
                     //LeaderThumbController.SetAllColor(Color.Lerp(playerInfo.PlayerColor, Color.white, 0.7f));
@@ -95,7 +95,7 @@ namespace JSF.Common.PlayerView
                     MemberFriendController memberFriendController = obj.GetComponent<MemberFriendController>();
                     if (memberFriendController)
                     {
-                        memberFriendController.FriendImage.sprite = playerInfo.Friends[i].CutInImage;
+                        memberFriendController.FriendImage.sprite = playerInfo.Friends[i].ThumbImage;
                         //memberFriendController.SetAllColor(Color.Lerp(playerInfo.PlayerColor, Color.white, 0.7f));
                         memberFriendController.PosID = i;
                         memberFriendController.OnClickFriend = OnClickFriendFunc;

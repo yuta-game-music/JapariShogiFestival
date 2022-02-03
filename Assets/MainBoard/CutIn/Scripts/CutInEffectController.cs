@@ -25,7 +25,7 @@ namespace JSF.Game.Effect
 
         public void SetFriend(Friend friend)
         {
-            if (Image) { Image.sprite = friend.CutInImage; }
+            if (Image) { Image.sprite = friend.ThumbImage; }
         }
         public bool AnimationEnd { get => Animator.GetCurrentAnimatorStateInfo(0).IsName("CutInEnd"); }
     }

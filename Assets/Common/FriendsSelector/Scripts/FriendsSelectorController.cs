@@ -34,7 +34,7 @@ namespace JSF.Common.FriendsSelector
                 cellController.Friend = Friends[i];
                 cellController.Controller = this;
 
-                yield return new WaitForSeconds(0.25f);
+                //yield return new WaitForSeconds(0.25f);
             }
 
             yield return new WaitUntil(()=>selected);

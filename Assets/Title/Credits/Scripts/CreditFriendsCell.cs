@@ -18,7 +18,7 @@ namespace JSF.Title
         public void SetFriend(Friend f)
         {
             FriendsNameText.text = f.Name;
-            FriendsImage.sprite = f.CutInImage;
+            FriendsImage.sprite = f.ThumbImage;
 
             AuthorText.text = "çÏé“ÅF"+(string.IsNullOrEmpty(f.AuthorName) ? "(ìΩñºäÛñ])" : f.AuthorName);
             if (f.AuthorImage == null)

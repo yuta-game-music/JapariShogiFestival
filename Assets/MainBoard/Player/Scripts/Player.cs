@@ -22,7 +22,7 @@ namespace JSF.Game.Player
             _leader = leader;
             if (LeaderImage)
             {
-                LeaderImage.sprite = _leader.Friend.CutInImage;
+                LeaderImage.sprite = _leader.Friend.ThumbImage;
             }
         }
 

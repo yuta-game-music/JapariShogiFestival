@@ -69,9 +69,9 @@ namespace JSF.SettingPage
                     GlobalVariable.Players[i].Direction = i == 0 ? RotationDirection.FORWARD : RotationDirection.BACKWARD;
                     GlobalVariable.Players[i].Friends = new Friend[]
                     {
-                        FriendsDatabase.Get().Friends[0],
-                        FriendsDatabase.Get().Friends[0],
-                        FriendsDatabase.Get().Friends[0],
+                        FriendsDatabase.Get().GetFriend("サーバル"),
+                        FriendsDatabase.Get().GetFriend("サーバル"),
+                        FriendsDatabase.Get().GetFriend("サーバル"),
                     };
                 }
             }

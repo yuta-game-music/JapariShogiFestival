@@ -31,7 +31,7 @@ namespace JSF.Common.FriendsSelector
 
         private void SetFriend(Friend friend)
         {
-            ThumbImage.sprite = friend.CutInImage;
+            ThumbImage.sprite = friend.ThumbImage;
             Text.text = friend.Name;
             _friend = friend;
         }
