@@ -3,7 +3,14 @@ guid: 8fe5a2a84dfbf9f479db4ed256a5b2a7
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - SEMixer: {fileID: 5892987359098298169, guid: 783f50153810cae48b1b50bb16576737, type: 2}
+  - ClickClip: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
+  - StartClip: {fileID: 8300000, guid: 4f86879e088021748be28b478ccc29ff, type: 3}
+  - ErrorClip: {fileID: 8300000, guid: ad21a87839a6e274b977a349e656d38b, type: 3}
+  - SkillCutInClip: {fileID: 8300000, guid: 0b57c25b3d258b341996c0f8f9c2b6d0, type: 3}
+  - PlaceFriendClip: {fileID: 8300000, guid: dffe48c7b9772374ea0127038ec92fb7, type: 3}
+  - MoveToLoungeClip: {fileID: 8300000, guid: a16ccc2f123ed874fae64bbdf5a5c4c2, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

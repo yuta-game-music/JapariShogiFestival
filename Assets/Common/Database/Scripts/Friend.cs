@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
+using JSF.Common;
 using JSF.Game;
 using JSF.Game.Player;
 using System.Linq;

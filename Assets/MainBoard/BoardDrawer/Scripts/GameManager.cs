@@ -5,6 +5,7 @@ using UnityEngine;
 using JSF.Game.UI;
 using JSF.Game.Board;
 using UnityEngine.SceneManagement;
+using JSF.Common;
 
 namespace JSF.Game
 {
@@ -247,6 +248,7 @@ namespace JSF.Game
                 friendOnBoard.transform.SetParent(cell_to.transform, false);
                 friendOnBoard.transform.localPosition = Vector3.zero;
                 friendOnBoard.SetDir(dir);
+                Util.PlaySE(SE.SEType.PlaceFriend);
                 if (cell_to.Friends != null && cell_to.Friends != friendOnBoard)
                 {
                     yield return MoveToLounge(cell_to.Friends, GoToLoungeOf);

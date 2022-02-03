@@ -4,6 +4,7 @@ using UnityEngine;
 using JSF.Database;
 using UnityEngine.UI;
 using JSF.Game.Board;
+using JSF.Common;
 
 namespace JSF.Game
 {
@@ -119,6 +120,7 @@ namespace JSF.Game
         }
         private IEnumerator GoToLoungeCoroutine(Player.Player player)
         {
+            Util.PlaySE(SE.SEType.MoveToLounge);
             Vector3 StartPos = transform.position;
             Vector3 EndPos = player.LeaderPos.position;
             float StartTime = Time.time;

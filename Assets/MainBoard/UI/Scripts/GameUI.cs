@@ -407,6 +407,10 @@ namespace JSF.Game.UI
 
         public IEnumerator PlayCutIn(Friend friend)
         {
+            // SE
+            Util.PlaySE(SE.SEType.SkillCutIn);
+
+            // カットイン表示
             var CutInObject = Instantiate(CutInPrefab);
             Transform p = ViewCanvasController?.EffectObject?.transform;
             CutInObject.transform.SetParent(p, false);

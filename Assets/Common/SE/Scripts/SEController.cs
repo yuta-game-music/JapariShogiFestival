@@ -12,6 +12,10 @@ namespace JSF.SE
 
         public AudioClip ClickClip;
         public AudioClip StartClip;
+        public AudioClip ErrorClip;
+        public AudioClip SkillCutInClip;
+        public AudioClip PlaceFriendClip;
+        public AudioClip MoveToLoungeClip;
         public void Start()
         {
             Util.SetSESource(this);
@@ -25,6 +29,18 @@ namespace JSF.SE
                     break;
                 case SEType.Start:
                     PlaySE(StartClip);
+                    break;
+                case SEType.Error:
+                    PlaySE(ErrorClip);
+                    break;
+                case SEType.SkillCutIn:
+                    PlaySE(SkillCutInClip);
+                    break;
+                case SEType.PlaceFriend:
+                    PlaySE(PlaceFriendClip);
+                    break;
+                case SEType.MoveToLounge:
+                    PlaySE(MoveToLoungeClip);
                     break;
                 default:
                     Debug.LogError("Unknown SEType: "+SEType);
@@ -52,6 +68,6 @@ namespace JSF.SE
 
     public enum SEType
     {
-        Click, Start
+        Click, Start, Error, SkillCutIn, PlaceFriend, MoveToLounge
     }
 }
