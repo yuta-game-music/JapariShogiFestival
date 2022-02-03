@@ -62,7 +62,7 @@ namespace JSF.SettingPage
             {
                 if (GlobalVariable.Players[i].Friends == null)
                 {
-                    GlobalVariable.Players[i].Name = "プレイヤー" + i;
+                    GlobalVariable.Players[i].Name = "プレイヤー" + (i + 1);
                     GlobalVariable.Players[i].ID = i;
                     GlobalVariable.Players[i].PlayerColor = i == 0 ? Color.red : Color.blue;
                     GlobalVariable.Players[i].PlayerType = PlayerType.User;
