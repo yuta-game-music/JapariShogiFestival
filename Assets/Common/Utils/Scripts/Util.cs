@@ -36,6 +36,20 @@ namespace JSF.Common
         {
             SESource?.PlaySE(SEType);
         }
+
+        public static string GetSavedFileDirectoryPath()
+        {
+#if !UNITY_EDITOR && UNITY_ANDROID
+        using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+        using (var getFilesDir = currentActivity.Call<AndroidJavaObject>("getFilesDir"))
+        {
+            return getFilesDir.Call<string>("getCanonicalPath");
+        }
+#else
+            return Application.persistentDataPath;
+#endif
+        }
     }
 
 }

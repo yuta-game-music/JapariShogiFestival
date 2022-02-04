@@ -13,8 +13,14 @@ namespace JSF.Common
             DontDestroyOnLoad(this);
 
             // ‰Šúƒ[ƒh
-            FriendsDatabase.Get();
+            BetterStreamingAssets.Initialize();
+            StartCoroutine(Load());
 
+        }
+
+        private IEnumerator Load()
+        {
+            yield return FriendsDatabase.Load();
             SceneManager.LoadScene("TitlePage");
         }
     }
