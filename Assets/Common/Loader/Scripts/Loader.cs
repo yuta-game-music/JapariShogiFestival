@@ -6,8 +6,9 @@ using JSF.Database;
 
 namespace JSF.Common
 {
-    public class CommonObject : MonoBehaviour
+    public class Loader : MonoBehaviour
     {
+        public bool AutoMoveToTitle = true;
         private void Start()
         {
             DontDestroyOnLoad(this);
@@ -21,7 +22,10 @@ namespace JSF.Common
         private IEnumerator Load()
         {
             yield return FriendsDatabase.Load();
-            SceneManager.LoadScene("TitlePage");
+            if (AutoMoveToTitle)
+            {
+                SceneManager.LoadScene("TitlePage");
+            }
         }
     }
 
