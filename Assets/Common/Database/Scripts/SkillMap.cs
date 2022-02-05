@@ -8,6 +8,7 @@ namespace JSF.Game
     public struct SkillMap
     {
         public string Name;
+        public string Description;
         public Vector2Int[] Pos;
         public int NeededSandstar;
         public FriendActionDescriptor ActionDescriptor;

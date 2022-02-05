@@ -18,6 +18,8 @@ namespace JSF.Game.UI
             if(Manager && Text)
             {
                 StringBuilder sb = new StringBuilder();
+
+                // ƒvƒŒƒCƒ„[î•ñ
                 foreach(var player in Manager.Players)
                 {
                     if (player.PlayerType == Player.PlayerType.Cellien) { continue; }

@@ -33,7 +33,35 @@ namespace JSF.Database
         {
             if (_static_db!=null) { return _static_db; }
 
-            Load();
+#if UNITY_EDITOR
+            // (エディタ専用)DBから読み込み
+            if (Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
+            {
+                _static_db = new FriendsDatabase();
+                string[] files = Directory.GetFiles("Assets/ServerUtil/Database/Friends/", "Friend.asset", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    Debug.Log(file);
+                    Friend f = AssetDatabase.LoadAssetAtPath<Friend>(file);
+                    if (f != null)
+                    {
+                        _static_db.friends.Add(f);
+                        Debug.Log("Loaded " + f.Name);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("not a friend!");
+                    }
+                }
+                return _static_db;
+            }
+#endif
+
+            // ロードが終わっていない場合の緊急措置
+            GameObject loaderObj = new GameObject();
+            loaderObj.name = "loader";
+            var loader = loaderObj.AddComponent<Loader>();
+            loader.AutoMoveToTitle = false;
             return _static_db;
         }
 
@@ -42,7 +70,7 @@ namespace JSF.Database
 
             _static_db = new FriendsDatabase();
 #if UNITY_EDITOR
-            if (false && Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
+            if (Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
             {
                 string[] files = Directory.GetFiles("Assets/ServerUtil/Database/Friends/", "Friend.asset", SearchOption.AllDirectories);
                 foreach (var file in files)
@@ -86,23 +114,6 @@ namespace JSF.Database
                             }
                         }
                     }
-                    /*
-                    var loading = BetterStreamingAssets.LoadAssetBundleAsync(file);
-                    yield return new WaitUntil(()=>loading.isDone);
-
-                    var loaded = loading.assetBundle;
-                    if (loaded == null)
-                    {
-                        Debug.LogWarning("Failed to load " + file);
-                        continue;
-                    }
-                    Friend f = loaded.LoadAsset<Friend>("friend");
-                    if (f == null)
-                    {
-                        Debug.LogWarning("Failed to load " + file + " (not a friend)");
-                        continue;
-                    }
-                    _static_db.friends.Add(f);*/
                 }
             }
 

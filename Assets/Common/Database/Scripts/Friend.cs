@@ -291,10 +291,15 @@ namespace JSF.Database
             }
             else
             {
-                // スキルが発動できない箇所で調査しようとした
-                Debug.LogWarning("Friend "+friendOnBoard.Friend.Name+" has no skill at "+RelativePos);
+                // スキルが発動できない箇所で調査しようとした (そのようなケースはよくあるのでコメントアウト)
+                // Debug.LogWarning("Friend "+friendOnBoard.Friend.Name+" has no skill at "+RelativePos);
                 return false;
             }
+        }
+
+        public bool CanUseSkillWithoutContext(Vector2Int diff)
+        {
+            return GetSkillMapByPos(diff).HasValue;
         }
 
         private Player GetGoToLoungeOf(GameManager GameManager, FriendAction Action, Player ToCellPossessor)
