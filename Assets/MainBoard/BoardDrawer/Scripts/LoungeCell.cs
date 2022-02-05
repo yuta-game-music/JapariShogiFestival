@@ -18,7 +18,7 @@ namespace JSF.Game.Board
         protected new void Start()
         {
             base.Start();
-            
+            tf = GetComponent<RectTransform>();
         }
 
         public void Setup(Player.Player Possessor, FriendOnBoard friend)
@@ -31,6 +31,12 @@ namespace JSF.Game.Board
         protected new void Update()
         {
             base.Update();
+
+            if (Friends)
+            {
+                RectTransform FriendsTF = Friends.GetComponent<RectTransform>();
+                FriendsTF.sizeDelta = tf.rect.size;
+            }
         }
 
     }

@@ -4,6 +4,7 @@ using UnityEngine;
 using JSF.Game.Player;
 using JSF.Database;
 using JSF.Game;
+using JSF.Game.Tutorial;
 
 namespace JSF
 {
@@ -11,6 +12,10 @@ namespace JSF
     {
         #region DebugInfo
         public static bool DebugMode = true;
+        #endregion
+
+        #region Tutorial
+        public static Tutorial? Tutorial = TutorialDatabase.tutorials[0]; 
         #endregion
 
         #region BoardInfo

@@ -24,6 +24,10 @@ namespace JSF.Database
                 {
                     return Friend;
                 }
+                if (Friend.FileName == name)
+                {
+                    return Friend;
+                }
             }
             Debug.LogError("Friend "+name+" not found! Maybe you have to refresh "+nameof(FriendsDatabase)+".");
             return null;
@@ -87,7 +91,7 @@ namespace JSF.Database
                         Debug.LogWarning("not a friend!");
                     }
                 }
-                yield return null;
+                yield break;
             }
 #endif
             // StreamingAssets‚Ìƒf[ƒ^‚ğPersistentPathˆÈ‰º‚É‘‚«‚İ

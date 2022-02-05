@@ -10,6 +10,7 @@ namespace JSF.Common
         RectTransform tf;
         public float AnchorYMin = 0;
         public float AnchorYMax = 1;
+        public float HeightDelta = 0;
         // Start is called before the first frame update
         void Start()
         {
@@ -42,7 +43,7 @@ namespace JSF.Common
                 }
                 tf.anchorMin = new Vector2(0, AnchorYMin);
                 tf.anchorMax = new Vector2(0, AnchorYMax);
-                tf.sizeDelta = new Vector2(w, 0);
+                tf.sizeDelta = new Vector2(w, HeightDelta);
             }
         }
 #if UNITY_EDITOR

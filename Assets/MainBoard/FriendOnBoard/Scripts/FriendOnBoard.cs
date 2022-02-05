@@ -15,11 +15,13 @@ namespace JSF.Game
         public Friend Friend;
         public Animator Animator { get; private set; }
         public RectTransform ViewerTF;
+        public RectTransform SelfTF;
         public Image ImageViewer;
         public Image LeaderFrameViewer;
         public Player.Player Possessor { get; private set; }
         public bool IsLeader { get; private set; }
         public Vector2Int? Pos { get => (!(Cell is LoungeCell)) ? (Cell?.SelfPos) : null; }
+        public int? LoungeID { get => (!(Cell is LoungeCell)) ? (Util.GetNthChild(transform)) : (int?)null; }
         public Cell Cell { get; private set; }
         public RotationDirection Dir { get; private set; }
 
@@ -41,21 +43,34 @@ namespace JSF.Game
             Animator.runtimeAnimatorController = Friend.AnimatorOverrideController;
             if (ImageViewer)
             {
+                ImageViewer.sprite = Friend?.OnBoardImage;
+            }
+            SelfTF = GetComponent<RectTransform>();
+            Vector2 size = SelfTF.rect.size;
+            SelfTF.anchorMax = SelfTF.anchorMin = Vector2.one * 0.5f;
+            SelfTF.sizeDelta = size;
+
+            if (ViewerTF && Cell != null) // 駒置き場のフレンズは別の手法でサイズ調整を行う
+            {
                 float zoom = (transform as RectTransform)?.rect.width / 100 ?? 1;
                 ViewerTF.localScale = new Vector3(zoom, zoom, 1);
                 ViewerTF.transform.localRotation = Quaternion.Euler(0, 0, RotationDirectionUtil.GetRotationDegree(Dir));
-                ImageViewer.sprite = Friend?.OnBoardImage;
             }
         }
 
         // Update is called once per frame
         void Update()
         {
-
+            if (ViewerTF && Cell==null)
+            {
+                float zoom = (transform as RectTransform)?.rect.width / 100 ?? 1;
+                ViewerTF.localScale = new Vector3(zoom, zoom, 1);
+                ViewerTF.transform.localRotation = Quaternion.Euler(0, 0, RotationDirectionUtil.GetRotationDegree(Dir));
+            }
         }
         public void InitialSetup(Cell cell, RotationDirection dir, Player.Player possessor, bool isLeader)
         {
-            if (_init) { throw new System.Exception("FriendOnBoard at "+cell.SelfPos+" is already initialized!"); }
+            if (_init) { throw new System.Exception("FriendOnBoard at "+cell?.SelfPos+" is already initialized!"); }
             if(isLeader && possessor.Leader!=null && possessor.Leader != this)
             {
                 // リーダーが2人以上いることは許されない
@@ -94,6 +109,13 @@ namespace JSF.Game
             {
                 ViewerTF.transform.localRotation = Quaternion.Euler(0, 0, RotationDirectionUtil.GetRotationDegree(Dir));
             }
+        }
+
+        // GameManager経由でのみ呼び出すこと
+        public void ChangePossessor(Player.Player new_possessor)
+        {
+            Possessor = new_possessor;
+            SetFrameColor(new_possessor.PlayerColor, IsLeader);
         }
 
         // GameManager経由でのみ呼び出すこと

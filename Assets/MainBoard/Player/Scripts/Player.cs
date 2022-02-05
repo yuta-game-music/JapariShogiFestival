@@ -1,3 +1,5 @@
+using JSF.Common;
+using JSF.Game.Board;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,7 +24,15 @@ namespace JSF.Game.Player
             _leader = leader;
             if (LeaderImage)
             {
-                LeaderImage.sprite = _leader.Friend.ThumbImage;
+                if (_leader != null)
+                {
+                    LeaderImage.enabled = true;
+                    LeaderImage.sprite = _leader.Friend.ThumbImage;
+                }
+                else
+                {
+                    LeaderImage.enabled = false;
+                }
             }
         }
 
@@ -35,6 +45,7 @@ namespace JSF.Game.Player
         public Image LeaderImage;
         public RectTransform LeaderImageTF;
         public Transform Lounge;
+        public HorizontalListSizeAdjuster LoungeSizeAdjuster;
         public TMPro.TMP_Text NameText;
         public SandstarGaugeController SandstarGaugeController;
 
@@ -48,6 +59,10 @@ namespace JSF.Game.Player
             {
                 LeaderImageTF.localScale = new Vector3(LeaderImageTF.rect.height / 100, 1, 1);
             }
+        }
+        private void Update()
+        {
+            LoungeSizeAdjuster.HeightDelta = Cell.SizeReferenceCellTF?.rect.height ?? 50f;
         }
 
         public void Init()
@@ -73,10 +88,15 @@ namespace JSF.Game.Player
         {
             SandstarGaugeController?.PlayGaugeAnimation(status, amount, length);
         }
+
+        public FriendOnBoard GetFriendsOnLoungeById(int id)
+        {
+            return Lounge?.GetChild(id)?.GetChild(0)?.GetComponent<FriendOnBoard>();
+        }
     }
 
     public enum PlayerType
     {
-        User, CPU, Cellien
+        User, CPU, Cellien, TutorialUser, TutorialCPU
     }
 }

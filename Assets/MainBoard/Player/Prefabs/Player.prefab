@@ -180,10 +180,10 @@ RectTransform:
   m_Father: {fileID: 8290921497000028010}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0.85}
+  m_AnchorMin: {x: 0, y: 0.425}
+  m_AnchorMax: {x: 0, y: 0.425}
   m_AnchoredPosition: {x: 100, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5219900858036047226
 MonoBehaviour:
@@ -197,8 +197,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3176748990ddd954b9d02a9fceda07af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AnchorYMin: 0
-  AnchorYMax: 0.85
+  AnchorYMin: 0.425
+  AnchorYMax: 0.425
+  HeightDelta: 50
 --- !u!1 &3127206080240342822
 GameObject:
   m_ObjectHideFlags: 0
@@ -885,5 +886,6 @@ MonoBehaviour:
   LeaderImage: {fileID: 8706838556760126784}
   LeaderImageTF: {fileID: 8604069347818482118}
   Lounge: {fileID: 320465065754436034}
+  LoungeSizeAdjuster: {fileID: 5219900858036047226}
   NameText: {fileID: 5820467255727438929}
   SandstarGaugeController: {fileID: 3203384472344944067}

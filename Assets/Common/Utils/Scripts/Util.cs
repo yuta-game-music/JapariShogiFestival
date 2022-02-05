@@ -23,7 +23,7 @@ namespace JSF.Common
         {
             if (Util.SESource != null)
             {
-                Debug.LogWarning("Double "+nameof(SESource)+" Designation!");
+                Debug.LogWarning("Double " + nameof(SESource) + " Designation!");
             }
             Util.SESource = SESource;
         }
@@ -50,6 +50,16 @@ namespace JSF.Common
 #else
             return Application.persistentDataPath;
 #endif
+        }
+
+        public static int GetNthChild(Transform tf)
+        {
+            Transform ptf = tf.parent;
+            for(var i = 0; i < ptf.childCount; i++)
+            {
+                if (ptf.GetChild(i) == tf) { return i; }
+            }
+            return -1;
         }
 
         public static Color GetCellColor(CellDrawStatus CellDrawStatus, MouseStatus MouseStatus, bool Disabled, bool RotationOnly)
@@ -108,6 +118,18 @@ namespace JSF.Common
                 tmp = Color.Lerp(tmp, Color.black, 0.4f);
             }
             return tmp;
+        }
+
+        public static Color GetFrameColor(Color color, bool isLeader)
+        {
+            if (isLeader)
+            {
+                return (Color.Lerp(color, Color.black, 0.2f));
+            }
+            else
+            {
+                return (Color.Lerp(color, Color.white, 0.6f));
+            }
         }
     }
 

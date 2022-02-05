@@ -68,7 +68,7 @@ namespace JSF.Game.Board
                     cellObject.transform.SetParent(row.transform,false);
                     Cell cell = cellObject.GetComponent<Cell>();
                     if (!cell) { throw new System.Exception("No Cell found in CellPrefab!"); }
-                    cell.SelfPos = new Vector2Int(c, r);
+                    cell.Setup(new Vector2Int(c, r));
                     cell.RotationOnly = !(0 <= c && c < W && 0 <= r && r < H);
                     BoardManager.Map.Add(cell.SelfPos, cell);
                 }

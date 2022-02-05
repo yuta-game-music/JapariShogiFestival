@@ -79,6 +79,7 @@ namespace JSF.Game.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            Util.PlaySE(SE.SEType.Click);
             MouseStatus = MouseStatus.Clicked;
             sheetViewer.SelectCell(pos);
         }

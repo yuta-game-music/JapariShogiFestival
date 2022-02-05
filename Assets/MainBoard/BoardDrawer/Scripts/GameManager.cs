@@ -6,6 +6,11 @@ using JSF.Game.UI;
 using JSF.Game.Board;
 using UnityEngine.SceneManagement;
 using JSF.Common;
+using JSF.Game.Logger;
+using JSF.Game.Tutorial;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace JSF.Game
 {
@@ -14,8 +19,8 @@ namespace JSF.Game
         public GameObject FriendOnBoardPrefab;
 
         public Player.Player[] Players;
-        [SerializeField]
-        private int PlayerInTurnID = 0;
+        
+        public int PlayerInTurnID = 0;
         public Player.Player PlayerInTurn { get => Players[PlayerInTurnID]; }
 
         public Dictionary<Vector2Int, Cell> Map { get; private set; } = new Dictionary<Vector2Int, Cell>();
@@ -26,6 +31,8 @@ namespace JSF.Game
 
         public Transform EffectObject;
 
+        public TutorialManager TutorialManager;
+
         public void Start()
         {
             // (デバッグ用)プレイヤー情報が入っていなければデフォルトを読み込む
@@ -34,8 +41,17 @@ namespace JSF.Game
 #endif
 
             // 盤面設定
-            BoardRenderer.W = GlobalVariable.BoardW;
-            BoardRenderer.H = GlobalVariable.BoardH;
+            if (GlobalVariable.Tutorial == null)
+            {
+                BoardRenderer.W = GlobalVariable.BoardW;
+                BoardRenderer.H = GlobalVariable.BoardH;
+            }
+            else
+            {
+                Tutorial.Tutorial tutorial = GlobalVariable.Tutorial.Value;
+                BoardRenderer.W = tutorial.InitialBoardStatus.Size.x;
+                BoardRenderer.H = tutorial.InitialBoardStatus.Size.y;
+            }
 
             for (var i = 0; i < GlobalVariable.Players.Length; i++)
             {
@@ -53,8 +69,11 @@ namespace JSF.Game
             Players[1].PlayerType = Player.PlayerType.Cellien;
             Players[1].Direction = RotationDirection.LEFT;
             Players[1].Init();
-            if (GlobalVariable.DebugMode)
+            if (GlobalVariable.Tutorial.HasValue)
             {
+                StartCoroutine(TutorialManager.OnStartTutorial(GlobalVariable.Tutorial.Value));
+            }
+            else {
                 StartCoroutine(PlaceFriendsRandomly());
             }
         }
@@ -191,6 +210,42 @@ namespace JSF.Game
             }
             return false;
         }
+
+        public void PlaceFriendAtLounge(Friend friend, Player.Player player)
+        {
+            GameObject LoungeCellObject = Instantiate(GameUI.LoungeCellPrefab);
+            LoungeCellObject.transform.SetParent(player.Lounge, false);
+            LoungeCellObject.transform.localPosition = Vector3.zero;
+            LoungeCellObject.transform.localRotation = Quaternion.Euler(0, 0, RotationDirectionUtil.GetRotationDegree(player.Direction));
+
+            GameObject fobobject = Instantiate(FriendOnBoardPrefab);
+            RectTransform fobTF = fobobject.GetComponent<RectTransform>();
+            fobTF.SetParent(LoungeCellObject.transform, false);
+            fobTF.localPosition = Vector3.zero;
+            // サイズリセット用
+            fobTF.anchorMin = Vector2.zero;
+            fobTF.anchorMax = Vector2.one;
+            fobTF.sizeDelta = Vector2.zero;
+            FriendOnBoard fob = fobobject.GetComponent<FriendOnBoard>();
+            fob.Friend = friend;
+            fob.InitialSetup(null, RotationDirection.FORWARD, player, false);
+
+
+            LoungeCell LoungeCell = LoungeCellObject.GetComponent<LoungeCell>();
+            if (!LoungeCell)
+            {
+                Debug.LogError("No LoungeCell attached to LoungeCellObject!", GameUI.LoungeCellPrefab);
+            }
+            else
+            {
+                LoungeCell.Setup(player, fob);
+                fob.MoveToCell(LoungeCell);
+            }
+            fob.ChangePossessor(player);
+            fobobject.transform.SetParent(LoungeCell.transform, false);
+            fobobject.transform.localPosition = Vector3.zero;
+            fobobject.transform.localRotation = Quaternion.identity;
+        }
         public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to, RotationDirection dir, bool TurnPass=false, Player.Player GoToLoungeOf=null)
         {
             if (Map.TryGetValue(to, out Cell cell_to))
@@ -310,10 +365,13 @@ namespace JSF.Game
             }
             yield return null;
         }
-        public IEnumerator SkipTurn()
+        public IEnumerator SkipTurn(bool turnPass = true)
         {
             PlayerInTurn.SandstarAmount += 1;// TODO: SandstarParameterを使う
-            yield return OnTurnPass();
+            if (turnPass)
+            {
+                yield return OnTurnPass();
+            }
         }
         public IEnumerator PlayCutIn(Friend friend)
         {
@@ -326,13 +384,24 @@ namespace JSF.Game
             switch (PlayerInTurn.PlayerType)
             {
                 case Player.PlayerType.User:
-                    yield return GameUI.OnPlayerTurnStart(PlayerInTurn);
+                    if (GlobalVariable.Tutorial != null)
+                    {
+                        yield return TutorialManager.OnUserTurnStart();
+                    }
+                    else
+                    {
+                        yield return GameUI.OnPlayerTurnStart(PlayerInTurn);
+                    }
                     yield break;
                 case Player.PlayerType.Cellien:
                     // TODO: セルリアンの行動はここに
                     yield return OnTurnPass();
                     break;
                 case Player.PlayerType.CPU:
+                    if (GlobalVariable.Tutorial != null)
+                    {
+                        yield return TutorialManager.OnCPUTurnStart();
+                    }
                     // TODO: CPUの行動はここに
                     yield return OnTurnPass();
                     break;
@@ -353,10 +422,19 @@ namespace JSF.Game
             // 条件チェック
             if(DoesAnyoneWin(out Player.Player Winner))
             {
-                Debug.Log("Winner: "+Winner);
+                Debug.Log("Winner: " + Winner);
                 yield return GameUI.PlayFinish(Winner);
                 GlobalVariable.Winner = Winner?.PlayerInfo;
-                SceneManager.LoadScene("ResultPage");
+                if (GlobalVariable.Tutorial == null)
+                {
+                    // チュートリアルではない →通常エンド画面に
+                    SceneManager.LoadScene("ResultPage");
+                }
+                else
+                {
+                    // チュートリアル中 →処理を戻す
+                    yield return TutorialManager.OnTurnStart();
+                }
             }
             else
             {
@@ -428,4 +506,31 @@ namespace JSF.Game
         }
 #endif
     }
+
+#if UNITY_EDITOR
+    [CustomEditor(typeof(GameManager))]
+    public class GameManagerEditor : Editor
+    {
+        Snapshot snapshot;
+
+        public override void OnInspectorGUI()
+        {
+            base.DrawDefaultInspector();
+
+            var manager = target as GameManager;
+            if (GUILayout.Button("Snapshot"))
+            {
+                snapshot = new Snapshot(manager);
+            }
+            
+            using(new EditorGUI.DisabledGroupScope(snapshot == null))
+            {
+                if (GUILayout.Button("Load"))
+                {
+                    snapshot.Restore(manager);
+                }
+            }
+        }
+    }
+#endif
 }

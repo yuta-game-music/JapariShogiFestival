@@ -23,6 +23,9 @@ namespace JSF.Game.Board
 
         protected GameManager GameManager;
 
+        // LoungeCellの大きさを決めるセルのRectTransform (0,0)の座標にあるセルを用いる
+        public static RectTransform SizeReferenceCellTF { get; private set; }
+
         // Start is called before the first frame update
         protected void Start()
         {
@@ -33,6 +36,10 @@ namespace JSF.Game.Board
         public void Setup(Vector2Int SelfPos)
         {
             this.SelfPos = SelfPos;
+            if (SelfPos == Vector2Int.zero)
+            {
+                SizeReferenceCellTF = GetComponent<RectTransform>();
+            }
         }
 
         // Update is called once per frame
