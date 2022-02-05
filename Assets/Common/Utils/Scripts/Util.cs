@@ -1,3 +1,4 @@
+using JSF.Game.UI;
 using JSF.SE;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,6 +50,64 @@ namespace JSF.Common
 #else
             return Application.persistentDataPath;
 #endif
+        }
+
+        public static Color GetCellColor(CellDrawStatus CellDrawStatus, MouseStatus MouseStatus, bool Disabled, bool RotationOnly)
+        {
+            Color ColorByStatus;
+            switch (CellDrawStatus)
+            {
+                case CellDrawStatus.Normal:
+                    ColorByStatus = Const.CellColorNormal;
+                    break;
+                case CellDrawStatus.CannotUse:
+                    ColorByStatus = Const.CellColorCannotUse;
+                    break;
+                case CellDrawStatus.CanMove:
+                    ColorByStatus = Const.CellColorCanMove;
+                    break;
+                case CellDrawStatus.CanRotate:
+                    ColorByStatus = Const.CellColorCanRotate;
+                    break;
+                case CellDrawStatus.CanEffectBySkill:
+                    ColorByStatus = Const.CellColorCanEffectBySkill;
+                    break;
+                case CellDrawStatus.Selected:
+                    ColorByStatus = Const.CellColorSelected;
+                    break;
+                default:
+                    Debug.LogWarning("Unknown CellDrawStatus: " + CellDrawStatus);
+                    ColorByStatus = Const.CellColorNormal;
+                    break;
+            }
+
+            Color ColorByMouse;
+            switch (MouseStatus)
+            {
+                case MouseStatus.None:
+                    ColorByMouse = Const.CellColorNormal;
+                    break;
+                case MouseStatus.Hovered:
+                    ColorByMouse = Const.CellColorHovered;
+                    break;
+                case MouseStatus.Clicked:
+                    ColorByMouse = Const.CellColorSelected;
+                    break;
+                default:
+                    Debug.LogWarning("Unknown MouseStatus: " + MouseStatus);
+                    ColorByMouse = Const.CellColorNormal;
+                    break;
+            }
+            Color tmp = Color.Lerp(ColorByStatus, ColorByMouse, 0.5f);
+            if (Disabled)
+            {
+                tmp = Color.Lerp(tmp, Color.black, 0.2f);
+            }
+            if (RotationOnly)
+            {
+                tmp = Color.Lerp(tmp, Color.black, 0.4f);
+            }
+            return tmp;
         }
     }
 
