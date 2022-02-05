@@ -29,7 +29,9 @@ namespace JSF.Game.UI
         public AudioClip ClickSound;
 
         [SerializeField]
-        private FriendOnBoard SelectedFriendOnBoard;
+        private FriendOnBoard _selectedFriendOnBoard;
+
+        public FriendOnBoard SelectedFriendOnBoard { get => _selectedFriendOnBoard; }
 
         [SerializeField]
         private UIMode UIMode;
@@ -46,7 +48,7 @@ namespace JSF.Game.UI
             }
             else
             {
-                SelectedFriendOnBoard = null;
+                _selectedFriendOnBoard = null;
             }
         }
 
@@ -61,7 +63,7 @@ namespace JSF.Game.UI
             {
                 if (friend.Possessor == GameManager.PlayerInTurn)
                 {
-                    if (SelectedFriendOnBoard == friend)
+                    if (_selectedFriendOnBoard == friend)
                     {
                         switch (UIMode)
                         {
@@ -73,7 +75,7 @@ namespace JSF.Game.UI
                                 UIMode = UIMode.Skill;
                                 break;
                             case UIMode.Skill:
-                                SelectedFriendOnBoard = null;
+                                _selectedFriendOnBoard = null;
                                 break;
                             default:
                                 Debug.LogError("Unknown UIMode " + UIMode.ToString());
@@ -82,13 +84,13 @@ namespace JSF.Game.UI
                     }
                     else
                     {
-                        SelectedFriendOnBoard = friend;
+                        _selectedFriendOnBoard = friend;
                         UIMode = UIMode.Move;
                     }
                 }
                 else
                 {
-                    SelectedFriendOnBoard = friend;
+                    _selectedFriendOnBoard = friend;
                     UIMode = UIMode.View;
                 }
             }
@@ -97,49 +99,49 @@ namespace JSF.Game.UI
         // 何かしらのアクションを起こす(ターン経過を含むがこれに限らない)場合はtrueを返す
         private bool OnClickCell(Cell cell)
         {
-            if (SelectedFriendOnBoard == null)
+            if (_selectedFriendOnBoard == null)
             {
                 return false;
             }
-            if (SelectedFriendOnBoard.Cell == cell)
+            if (_selectedFriendOnBoard.Cell == cell)
             {
                 return false;
             }
-            if(SelectedFriendOnBoard.Possessor != GameManager.PlayerInTurn)
+            if(_selectedFriendOnBoard.Possessor != GameManager.PlayerInTurn)
             {
                 return false;
             }
-            if (SelectedFriendOnBoard.Pos.HasValue)
+            if (_selectedFriendOnBoard.Pos.HasValue)
             {
                 // 盤上のフレンズを選択している場合
-                Vector2Int diff = cell.SelfPos - SelectedFriendOnBoard.Pos.Value;
-                diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(SelectedFriendOnBoard.Dir));
-                if (UIMode == UIMode.Move && SelectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
+                Vector2Int diff = cell.SelfPos - _selectedFriendOnBoard.Pos.Value;
+                diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(_selectedFriendOnBoard.Dir));
+                if (UIMode == UIMode.Move && _selectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
                 {
                     // フレンズをcellに動かす
-                    StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, cell, null, true));
+                    StartCoroutine(MoveFriendCoroutine(_selectedFriendOnBoard, cell, null, true));
                     return true;
                 }
-                else if (UIMode == UIMode.Rotate && SelectedFriendOnBoard.Friend.CanRotateTo(diff))
+                else if (UIMode == UIMode.Rotate && _selectedFriendOnBoard.Friend.CanRotateTo(diff))
                 {
                     // 回転
-                    StartCoroutine(MoveFriendCoroutine(SelectedFriendOnBoard, SelectedFriendOnBoard.Cell, RotationDirectionUtil.CalcRotationDegreeFromVector(SelectedFriendOnBoard.Pos.Value - cell.SelfPos), false));
+                    StartCoroutine(MoveFriendCoroutine(_selectedFriendOnBoard, _selectedFriendOnBoard.Cell, RotationDirectionUtil.CalcRotationDegreeFromVector(_selectedFriendOnBoard.Pos.Value - cell.SelfPos), false));
                     return true;
                 }
                 else if (UIMode == UIMode.Skill && !cell.RotationOnly)
                 {
-                    var Skill = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
+                    var Skill = _selectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
                     if (Skill.HasValue)
                     {
-                        if (Skill.Value.NeededSandstar > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        if (Skill.Value.NeededSandstar > _selectedFriendOnBoard.Possessor.SandstarAmount)
                         {
                             GameManager.PlayerInTurn.PlaySandstarGaugeAnimation(Player.SandstarGaugeStatus.LitRed, Skill.Value.NeededSandstar, 1f);
                             return true;
                         }
-                        if(SelectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, SelectedFriendOnBoard, GameManager))
+                        if(_selectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, _selectedFriendOnBoard, GameManager))
                         {
                             // スキル発動
-                            StartCoroutine(UseSkillCoroutine(SelectedFriendOnBoard, cell));
+                            StartCoroutine(UseSkillCoroutine(_selectedFriendOnBoard, cell));
                             return true;
                         }
                         else
@@ -155,7 +157,7 @@ namespace JSF.Game.UI
                 // TODO: 駒台のフレンズを選択している場合
                 if (GameManager.PlayerInTurn.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
                 {
-                    GameManager.PlaceFriendFromLounge(SelectedFriendOnBoard, cell);
+                    GameManager.PlaceFriendFromLounge(_selectedFriendOnBoard, cell);
                     return true;
                 }
                 else
@@ -182,7 +184,12 @@ namespace JSF.Game.UI
         public void OnStartDragFriendOnBoard(FriendOnBoard friend, Cell from)
         {
             friend.transform.SetParent(transform, true);
-            SelectedFriendOnBoard = friend;
+            if (_selectedFriendOnBoard != friend)
+            {
+                // ドラッグし始めたフレンズが未選択だった場合はUIModeをリセット
+                UIMode = UIMode.View;
+            }
+            _selectedFriendOnBoard = friend;
         }
         public void OnDraggingFriendOnBoard(FriendOnBoard friend, Vector2 cursorPos)
         {
@@ -190,7 +197,7 @@ namespace JSF.Game.UI
         }
         public void OnDragAndDropFriendOnBoard(FriendOnBoard friend, Cell from, Cell to)
         {
-            SelectedFriendOnBoard = null;
+            _selectedFriendOnBoard = null;
             friend.transform.SetParent(from.transform, true);
             friend.transform.localPosition = Vector3.zero;
             if(friend.Cell is LoungeCell)
@@ -271,9 +278,9 @@ namespace JSF.Game.UI
         {
             if (!CanInteract) { disabled = false; return CellDrawStatus.Normal; }
             disabled = false;
-            if (SelectedFriendOnBoard)
+            if (_selectedFriendOnBoard)
             {
-                if (!SelectedFriendOnBoard.Pos.HasValue)
+                if (!_selectedFriendOnBoard.Pos.HasValue)
                 {
                     // TODO:駒台のフレンズを選択しているとき
                     switch (GameManager.PlayerInTurn.Direction)
@@ -304,7 +311,7 @@ namespace JSF.Game.UI
                     }
                     return CellDrawStatus.Normal;
                 }
-                if (SelectedFriendOnBoard.Pos == cell.SelfPos)
+                if (_selectedFriendOnBoard.Pos == cell.SelfPos)
                 {
                     if (cell.Friends != null && cell.Friends.Possessor != GameManager.PlayerInTurn)
                     {
@@ -312,28 +319,28 @@ namespace JSF.Game.UI
                     }
                     return CellDrawStatus.Selected;
                 }
-                Vector2Int diff = cell.SelfPos - SelectedFriendOnBoard.Pos.Value;
-                diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(SelectedFriendOnBoard.Dir));
+                Vector2Int diff = cell.SelfPos - _selectedFriendOnBoard.Pos.Value;
+                diff = RotationDirectionUtil.GetRotatedVector(diff, RotationDirectionUtil.Invert(_selectedFriendOnBoard.Dir));
 
-                if (UIMode==UIMode.Move && SelectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
+                if (UIMode==UIMode.Move && _selectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
                 {
                     return CellDrawStatus.CanMove;
                 }
-                else if(UIMode == UIMode.Rotate && SelectedFriendOnBoard.Friend.CanRotateTo(diff))
+                else if(UIMode == UIMode.Rotate && _selectedFriendOnBoard.Friend.CanRotateTo(diff))
                 {
                     return CellDrawStatus.CanRotate;
                 }
                 else if (UIMode == UIMode.Skill && !cell.RotationOnly)
                 {
-                    var _skillMap = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
+                    var _skillMap = _selectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
                     if (_skillMap.HasValue)
                     {
                         var skillMap = _skillMap.Value;
-                        if (skillMap.NeededSandstar > SelectedFriendOnBoard.Possessor.SandstarAmount)
+                        if (skillMap.NeededSandstar > _selectedFriendOnBoard.Possessor.SandstarAmount)
                         {
                             disabled = true;
                         }
-                        if(!SelectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, SelectedFriendOnBoard, GameManager))
+                        if(!_selectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, _selectedFriendOnBoard, GameManager))
                         {
                             disabled = true;
                         }
@@ -347,16 +354,16 @@ namespace JSF.Game.UI
                 else if (UIMode == UIMode.View)
                 {
                     disabled = true;
-                    if (SelectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
+                    if (_selectedFriendOnBoard.Friend.CanNormalMove(diff) && !cell.RotationOnly)
                     {
                         return CellDrawStatus.CanMove;
                     }
-                    else if (SelectedFriendOnBoard.Friend.CanRotateTo(diff))
+                    else if (_selectedFriendOnBoard.Friend.CanRotateTo(diff))
                     {
                         return CellDrawStatus.CanRotate;
                     }
 
-                    var _skillMap = SelectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
+                    var _skillMap = _selectedFriendOnBoard.Friend.GetSkillMapByPos(diff);
                     if (_skillMap.HasValue && !cell.RotationOnly)
                     {
                         return CellDrawStatus.CanEffectBySkill;
@@ -442,7 +449,7 @@ namespace JSF.Game.UI
 
         public void ResetView()
         {
-            SelectedFriendOnBoard = null;
+            _selectedFriendOnBoard = null;
             UIMode = UIMode.View;
             CanInteract = true;
         }
@@ -451,6 +458,11 @@ namespace JSF.Game.UI
     public enum CellDrawStatus
     {
         Normal, CanMove, CanRotate, CanEffectBySkill, Selected, CannotUse
+    }
+
+    public enum MouseStatus
+    {
+        None, Hovered, Clicked
     }
 
     public enum UIMode
