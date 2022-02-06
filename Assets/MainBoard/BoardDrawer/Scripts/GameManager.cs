@@ -81,6 +81,7 @@ namespace JSF.Game
         private IEnumerator PlaceFriendsRandomly()
         {
             yield return new WaitForSeconds(0.5f);
+            float delay = Mathf.Min(2.0f/(GlobalVariable.FriendsCount+1),0.3f);
             for(var i = 0; true; i++)
             {
                 var player_full_on_downside = false;
@@ -115,7 +116,10 @@ namespace JSF.Game
                         p,
                         i==0);
                     player_full_on_downside = !player_full_on_downside;
-                    yield return new WaitForSeconds(0.3f);
+                    if (i > 0) {
+                        // リーダー以外に遅延表示
+                        yield return new WaitForSeconds(delay);
+                    }
                     placed_any_friend = true;
                 }
                 if (!placed_any_friend) { break; }

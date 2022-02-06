@@ -12,21 +12,34 @@ namespace JSF.SettingPage
         public TMP_Text BoardWText;
         public TMP_Text BoardHText;
         public TMP_Text BoardRealmHeightText;
+        public TMP_Text FriendsCountText;
         public TMP_Text InitialSandstarText;
         public void OnClickBoardWidthChange(int value)
         {
             GlobalVariable.BoardW = Mathf.Clamp(GlobalVariable.BoardW + value, GlobalVariable.MIN_BOARD_W, GlobalVariable.MAX_BOARD_W);
+            GlobalVariable.FriendsCount = Mathf.Clamp(GlobalVariable.FriendsCount, 2,
+                GlobalVariable.BoardW * GlobalVariable.BoardRealmHeight);
             UpdateText();
         }
         public void OnClickBoardHeightChange(int value)
         {
             GlobalVariable.BoardH = Mathf.Clamp(GlobalVariable.BoardH + value, GlobalVariable.MIN_BOARD_H, GlobalVariable.MAX_BOARD_H);
             GlobalVariable.BoardRealmHeight = Mathf.Clamp(GlobalVariable.BoardRealmHeight, 1, GlobalVariable.BoardH / 2);
+            GlobalVariable.FriendsCount = Mathf.Clamp(GlobalVariable.FriendsCount, 2,
+                GlobalVariable.BoardW * GlobalVariable.BoardRealmHeight);
             UpdateText();
         }
         public void OnClickBoardRealmHeightChange(int value)
         {
             GlobalVariable.BoardRealmHeight = Mathf.Clamp(GlobalVariable.BoardRealmHeight + value, 1, GlobalVariable.BoardH/2);
+            GlobalVariable.FriendsCount = Mathf.Clamp(GlobalVariable.FriendsCount, 2,
+                GlobalVariable.BoardW * GlobalVariable.BoardRealmHeight);
+            UpdateText();
+        }
+        public void OnClickFriendsCountChange(int value)
+        {
+            GlobalVariable.FriendsCount = Mathf.Clamp(GlobalVariable.FriendsCount + value, 2,
+                GlobalVariable.BoardW * GlobalVariable.BoardRealmHeight);
             UpdateText();
         }
         public void OnClickInitialSandstarChange(int value)
@@ -46,6 +59,7 @@ namespace JSF.SettingPage
             if (BoardHText) { BoardHText.text = GlobalVariable.BoardH.ToString(); }
             if (BoardRealmHeightText) { BoardRealmHeightText.text = GlobalVariable.BoardRealmHeight.ToString(); }
             if (InitialSandstarText) { InitialSandstarText.text = GlobalVariable.InitialSandstar.ToString(); }
+            if (FriendsCountText) { FriendsCountText.text = GlobalVariable.FriendsCount.ToString(); }
         }
         public void OnPointerClick(PointerEventData eventData)
         {

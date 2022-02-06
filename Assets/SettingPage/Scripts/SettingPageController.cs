@@ -51,6 +51,25 @@ namespace JSF.SettingPage
             GameSettingsPageAnimation.SetBool("Show", visible);
 
             yield return new WaitUntil(() => GameSettingsPageAnimation.GetCurrentAnimatorStateInfo(layer_id).IsName(visible ? "Shown" : "Hidden"));
+            if (!visible)
+            {
+                // フレンズ数更新
+                for(var i = 0; i < GlobalVariable.Players.Length; i++)
+                {
+                    var old_friends = GlobalVariable.Players[i].Friends;
+                    var new_friends = new Friend[GlobalVariable.FriendsCount];
+
+                    for(var f = 0; f < new_friends.Length; f++)
+                    {
+                        new_friends[f] = old_friends[f%old_friends.Length];
+                    }
+                    GlobalVariable.Players[i].Friends = new_friends;
+                }
+                PlayerViewController1.PlayerInfo = GlobalVariable.Players[0];
+                PlayerViewController1.Refresh();
+                PlayerViewController2.PlayerInfo = GlobalVariable.Players[1];
+                PlayerViewController2.Refresh();
+            }
         }
         private void CheckPlayerData()
         {

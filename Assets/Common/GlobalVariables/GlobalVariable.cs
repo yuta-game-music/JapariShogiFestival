@@ -26,7 +26,8 @@ namespace JSF
 
         public static int BoardW = 5;
         public static int BoardH = 5;
-        public static int BoardRealmHeight = 1;//©w—Ìˆæ
+        public static int BoardRealmHeight = 1; //©w—Ìˆæ
+        public static int FriendsCount = 3;
         public static int InitialSandstar = 0;
         public static int NeededSandstarForPlacingNewFriend = 5;
         public static int MaxSandstar = 15;
