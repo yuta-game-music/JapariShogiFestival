@@ -33,6 +33,9 @@ namespace JSF.Game
 
         public TutorialManager TutorialManager;
 
+        private bool init = false;
+        private bool StartNextTurn = false;
+
         public void Start()
         {
             // (デバッグ用)プレイヤー情報が入っていなければデフォルトを読み込む
@@ -96,7 +99,15 @@ namespace JSF.Game
                     int trial = 0;
                     do
                     {
-                        pos = new Vector2Int(Random.Range(0, GlobalVariable.BoardW), Random.Range(0, GlobalVariable.BoardRealmHeight));
+                        if (i == 0)
+                        {
+                            // リーダーだけは最下部に置く
+                            pos = new Vector2Int(Random.Range(0, GlobalVariable.BoardW), 0);
+                        }
+                        else
+                        {
+                            pos = new Vector2Int(Random.Range(0, GlobalVariable.BoardW), Random.Range(0, GlobalVariable.BoardRealmHeight));
+                        }
                         if (player_full_on_downside)
                         {
                             pos.y *= -1;
@@ -124,13 +135,26 @@ namespace JSF.Game
                 }
                 if (!placed_any_friend) { break; }
             }
-            yield return OnTurnStart();
+
+#if UNITY_EDITOR
+            // TODO: デバッグ用機能の削除
+            //UnityEditor.EditorApplication.isPaused = true;
+#endif
+            StartNextTurn = true;
         }
 
         private void Update()
         {
-            BoardRenderer?.SetBoard();
-            enabled = false;
+            if (!init)
+            {
+                BoardRenderer?.SetBoard();
+                init = true;
+            }
+            if (StartNextTurn)
+            {
+                StartNextTurn = false;
+                StartCoroutine(OnTurnStart());
+            }
         }
 
         public bool PlaceFriend(Vector2Int pos, RotationDirection dir, Friend friend, Player.Player possessor, bool isLeader, bool tryOnly = false)
@@ -149,7 +173,6 @@ namespace JSF.Game
                         friendOnBoard.InitialSetup(Cell, dir, possessor, isLeader);
 
                         Cell.Friends = friendOnBoard;
-                        Debug.Log("Placed friend " + friendOnBoard.Friend.Name + ": " + pos + " rot=" + dir.ToString());
                     }
 
                     return true;
@@ -171,7 +194,7 @@ namespace JSF.Game
                 return false;
             }
         }
-        public bool PlaceFriendFromLounge(FriendOnBoard Friend, Cell to, bool tryOnly = false)
+        public IEnumerator PlaceFriendFromLounge(FriendOnBoard Friend, Cell to)
         {
             // 完全新規のフレンズとして出す
             switch (PlayerInTurn.Direction)
@@ -180,39 +203,34 @@ namespace JSF.Game
                     if (to.SelfPos.y > GlobalVariable.BoardRealmHeight)
                     {
                         // 領域外
-                        if (!tryOnly)
-                        {
-                            Debug.LogError("Out of Realm!");
-                        }
-                        return false;
+                        throw new System.Exception("Out of Realm!");
                     }
                     break;
                 case RotationDirection.BACKWARD:
                     if (GlobalVariable.BoardH - 1 - to.SelfPos.y > GlobalVariable.BoardRealmHeight)
                     {
                         // 領域外
-                        if (!tryOnly)
-                        {
-                            Debug.LogError("Out of Realm!");
-                        }
-                        return false;
+                        throw new System.Exception("Out of Realm!");
                     }
                     break;
                 default:
-                    return false;
+                    // サポート外の向き
+                    throw new System.Exception("Player Direction "+PlayerInTurn.Direction+" not supported!");
             }
-            if (PlaceFriend(to.SelfPos, Friend.Possessor.Direction, Friend.Friend, Friend.Possessor, tryOnly))
+            if (PlaceFriend(to.SelfPos, Friend.Possessor.Direction, Friend.Friend, Friend.Possessor, false))
             {
-                if (!tryOnly)
-                {
-                    // フレンズをセルごと消す
-                    Destroy(Friend.Cell.gameObject);
-                    Friend.Possessor.SandstarAmount -= GlobalVariable.NeededSandstarForPlacingNewFriend;
-                    StartCoroutine(OnTurnPass());
-                }
-                return true;
+                // フレンズをセルごと消す
+                Destroy(Friend.Cell.gameObject);
+                Friend.Possessor.SandstarAmount -= GlobalVariable.NeededSandstarForPlacingNewFriend;
+                Util.PlaySE(SE.SEType.PlaceFriend);
+                yield return new WaitForSeconds(0.3f);
+                StartCoroutine(OnTurnPass());
+                yield break;
             }
-            return false;
+            else
+            {
+                throw new System.Exception("Cannot Place Friend at "+to.SelfPos+"!");
+            }
         }
 
         public void PlaceFriendAtLounge(Friend friend, Player.Player player)
@@ -274,6 +292,11 @@ namespace JSF.Game
                 // 盤上にないフレンズを指定してしまった
                 throw new System.Exception("Friends not on any Cell!");
             }
+            if (cell_to.RotationOnly)
+            {
+                // 回転のみのセルに移動しようとした
+                throw new System.Exception("Cannot move onto Rotation-Only Cell!");
+            }
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
                 yield return friendOnBoard.Friend.MoveNormal(friendOnBoard.Pos.Value, cell_to.SelfPos, friendOnBoard);
@@ -299,6 +322,11 @@ namespace JSF.Game
             {
                 // 盤上にないフレンズを指定してしまった
                 throw new System.Exception("Friends not on any Cell!");
+            }
+            if (cell_to.RotationOnly)
+            {
+                // 回転のみのセルに移動しようとした
+                throw new System.Exception("Cannot move onto Rotation-Only Cell!");
             }
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
@@ -371,7 +399,8 @@ namespace JSF.Game
         }
         public IEnumerator SkipTurn(bool turnPass = true)
         {
-            PlayerInTurn.SandstarAmount += 1;// TODO: SandstarParameterを使う
+            PlayerInTurn.SandstarAmount += GlobalVariable.GettingSandstarOnWait;
+            PlayerInTurn.SandstarAmount = Mathf.Min(PlayerInTurn.SandstarAmount, GlobalVariable.MaxSandstar);
             if (turnPass)
             {
                 yield return OnTurnPass();
@@ -407,7 +436,7 @@ namespace JSF.Game
                         yield return TutorialManager.OnCPUTurnStart();
                     }
                     // TODO: CPUの行動はここに
-                    yield return OnTurnPass();
+                    yield return CPU.CPUBehaviour.Exec(this, PlayerInTurnID);
                     break;
                 default:
                     Debug.LogWarning("Unknown Player Type "+PlayerInTurn.PlayerType+"! Passing this turn...");
@@ -418,8 +447,9 @@ namespace JSF.Game
 
         public IEnumerator OnTurnPass()
         {
-            // サンドスター補給 TODO:SandstarParameterを使う
-            PlayerInTurn.SandstarAmount += 1;
+            // サンドスター補給
+            PlayerInTurn.SandstarAmount += GlobalVariable.GettingSandstarPerTurn;
+            PlayerInTurn.SandstarAmount = Mathf.Min(PlayerInTurn.SandstarAmount, GlobalVariable.MaxSandstar);
 
             // ターンを次に進める
             PlayerInTurnID = (PlayerInTurnID + 1) % Players.Length;
@@ -442,7 +472,7 @@ namespace JSF.Game
             }
             else
             {
-                yield return OnTurnStart();
+                StartNextTurn = true;
             }
         }
 
@@ -497,7 +527,6 @@ namespace JSF.Game
                     GlobalVariable.Players[i].Name = "プレイヤー" + (i+1);
                     GlobalVariable.Players[i].ID = i;
                     GlobalVariable.Players[i].PlayerColor = i == 0 ? Color.red : Color.blue;
-                    GlobalVariable.Players[i].PlayerType = Player.PlayerType.User;
                     GlobalVariable.Players[i].Direction = i == 0 ? RotationDirection.FORWARD : RotationDirection.BACKWARD;
                     GlobalVariable.Players[i].Friends = new Friend[]
                     {
@@ -505,6 +534,10 @@ namespace JSF.Game
                         FriendsDatabase.Get().Friends[0],
                         FriendsDatabase.Get().Friends[0],
                     };
+                }
+                if(GlobalVariable.Players[i].PlayerType != Player.PlayerType.User && GlobalVariable.Players[i].PlayerType != Player.PlayerType.CPU)
+                {
+                    GlobalVariable.Players[i].PlayerType = Player.PlayerType.User;
                 }
             }
         }

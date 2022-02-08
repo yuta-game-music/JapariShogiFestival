@@ -84,7 +84,6 @@ namespace JSF.SettingPage
                     GlobalVariable.Players[i].Name = "プレイヤー" + (i + 1);
                     GlobalVariable.Players[i].ID = i;
                     GlobalVariable.Players[i].PlayerColor = i == 0 ? Color.red : Color.blue;
-                    GlobalVariable.Players[i].PlayerType = PlayerType.User;
                     GlobalVariable.Players[i].Direction = i == 0 ? RotationDirection.FORWARD : RotationDirection.BACKWARD;
                     GlobalVariable.Players[i].Friends = new Friend[]
                     {
@@ -92,6 +91,10 @@ namespace JSF.SettingPage
                         FriendsDatabase.Get().GetFriend("サーバル"),
                         FriendsDatabase.Get().GetFriend("サーバル"),
                     };
+                }
+                if (GlobalVariable.Players[i].PlayerType != PlayerType.User && GlobalVariable.Players[i].PlayerType != PlayerType.CPU)
+                {
+                    GlobalVariable.Players[i].PlayerType = PlayerType.User;
                 }
             }
         }

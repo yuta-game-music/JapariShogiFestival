@@ -204,8 +204,8 @@ namespace JSF.Database
             }
         }
 
-        // スキルが発動できる場所にいるか
-        public bool CanUseSkill(Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager)
+        // スキルが発動できる場所にいるか等を計算
+        public SkillSimulationResult SimulateSkill(Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager)
         {
             Vector2Int from = friendOnBoard.Pos.Value;
             RotationDirection fromDir = friendOnBoard.Dir;
@@ -218,11 +218,11 @@ namespace JSF.Database
                 if (SkillMap.ActionDescriptor?.FriendAction == null)
                 {
                     Debug.LogWarning("Invalid skill detected! " + Name + "/" + SkillMap.Name + " does not have any ActionDescriptor or FriendAction!");
-                    return false;
+                    return new SkillSimulationResult() { CanUseSkill = false };
                 }
                 Vector2Int SimulatedPos = friendOnBoard.Pos.Value;
                 RotationDirection SimulatedDir = friendOnBoard.Dir;
-
+                List<FriendOnBoard> GettingFriends = new List<FriendOnBoard>();
                 foreach (var Action in SkillMap.ActionDescriptor.FriendAction)
                 {
                     switch (Action.ActionType)
@@ -245,16 +245,20 @@ namespace JSF.Database
                                 if (!GameManager.Map.TryGetValue(to_pos, out var cell))
                                 {
                                     // 行けないセルに行こうとしたので中止
-                                    return false;
+                                    return new SkillSimulationResult() { CanUseSkill = false };
                                 }
                                 else if (cell.RotationOnly)
                                 {
                                     // 行けないセルに行こうとしたので中止
-                                    return false;
+                                    return new SkillSimulationResult() { CanUseSkill = false };
                                 }
                                 else
                                 {
                                     SimulatedPos = to_pos;
+                                    if (cell.Friends && !GettingFriends.Contains(cell.Friends))
+                                    {
+                                        GettingFriends.Add(cell.Friends);
+                                    }
                                 }
                             }
                             break;
@@ -283,17 +287,31 @@ namespace JSF.Database
                         case FriendActionType.MoveToLounge:
                             break;
                         case FriendActionType.EndTurn:
-                            return true;
+                            return new SkillSimulationResult()
+                            {
+                                CanUseSkill = true,
+                                GettingFriends = GettingFriends.ToArray(),
+                                LastPos = SimulatedPos,
+                                LastDir = SimulatedDir,
+                            };
                     }
                 }
 
-                return true;
+                return new SkillSimulationResult() {
+                    CanUseSkill = true,
+                    GettingFriends = GettingFriends.ToArray(),
+                    LastPos = SimulatedPos,
+                    LastDir = SimulatedDir,
+                };
             }
             else
             {
                 // スキルが発動できない箇所で調査しようとした (そのようなケースはよくあるのでコメントアウト)
                 // Debug.LogWarning("Friend "+friendOnBoard.Friend.Name+" has no skill at "+RelativePos);
-                return false;
+                return new SkillSimulationResult()
+                {
+                    CanUseSkill = false,
+                };
             }
         }
 
@@ -430,4 +448,11 @@ namespace JSF.Database
         #endregion
     }
 
+    public struct SkillSimulationResult
+    {
+        public bool CanUseSkill;
+        public FriendOnBoard[] GettingFriends;
+        public Vector2Int LastPos;
+        public RotationDirection LastDir;
+    }
 }

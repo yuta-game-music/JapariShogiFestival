@@ -17,6 +17,7 @@ namespace JSF.Title
         {
             yield return Controller.PlayWhiteOutEffect();
             GlobalVariable.Tutorial = null;
+            GlobalVariable.Players[1].PlayerType = Game.Player.PlayerType.User;
             SceneManager.LoadScene("SettingPage");
         }
     }

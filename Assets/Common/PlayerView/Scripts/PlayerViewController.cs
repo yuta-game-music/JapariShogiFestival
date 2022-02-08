@@ -25,6 +25,7 @@ namespace JSF.Common.PlayerView
         public GameObject PlayerNameViewer;
         public TMPro.TMP_Text PlayerNameText;
         public TMPro.TMP_Text LeaderMessageText;
+        public TMPro.TMP_Text PlayerTypeText;
 
         private bool _init = false;
 
@@ -86,6 +87,18 @@ namespace JSF.Common.PlayerView
                 }
 
                 PlayerNameText.text = playerInfo.Name;
+                switch (playerInfo.PlayerType)
+                {
+                    case Game.Player.PlayerType.User:
+                        PlayerTypeText.text = "";
+                        break;
+                    case Game.Player.PlayerType.CPU:
+                        PlayerTypeText.text = "[CPU]";
+                        break;
+                    case Game.Player.PlayerType.Cellien:
+                        PlayerTypeText.text = "[Cellien]";
+                        break;
+                }
                 // メンバーフレンズ
                 for(var i = 1; i < playerInfo.Friends.Length; i++)
                 {

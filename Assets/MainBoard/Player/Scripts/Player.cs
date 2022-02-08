@@ -1,7 +1,9 @@
 using JSF.Common;
 using JSF.Game.Board;
+using JSF.Game.CPU;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -89,14 +91,30 @@ namespace JSF.Game.Player
             SandstarGaugeController?.PlayGaugeAnimation(status, amount, length);
         }
 
+        public int LoungeSize { get => Lounge?.childCount ?? 0; }
         public FriendOnBoard GetFriendsOnLoungeById(int id)
         {
             return Lounge?.GetChild(id)?.GetChild(0)?.GetComponent<FriendOnBoard>();
+        }
+
+        public Cell[] GetCellsInMyRealm(GameManager manager)
+        {
+            return manager.Map.Values.Where((cell) =>
+            {
+                if (Direction == RotationDirection.FORWARD)
+                {
+                    return cell.SelfPos.y < GlobalVariable.BoardRealmHeight;
+                }
+                else
+                {
+                    return (GlobalVariable.BoardH - cell.SelfPos.y - 1) < GlobalVariable.BoardRealmHeight;
+                }
+            }).Where((cell)=>!cell.RotationOnly).ToArray();
         }
     }
 
     public enum PlayerType
     {
-        User, CPU, Cellien, TutorialUser, TutorialCPU
+        User, CPU, Cellien
     }
 }

@@ -138,7 +138,7 @@ namespace JSF.Game.UI
                             GameManager.PlayerInTurn.PlaySandstarGaugeAnimation(Player.SandstarGaugeStatus.LitRed, Skill.Value.NeededSandstar, 1f);
                             return true;
                         }
-                        if(_selectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, _selectedFriendOnBoard, GameManager))
+                        if(_selectedFriendOnBoard.Friend.SimulateSkill(cell.SelfPos, _selectedFriendOnBoard, GameManager).CanUseSkill)
                         {
                             // ƒXƒLƒ‹”­“®
                             StartCoroutine(UseSkillCoroutine(_selectedFriendOnBoard, cell));
@@ -227,7 +227,7 @@ namespace JSF.Game.UI
                     StartCoroutine(MoveFriendCoroutine(friend, from,
                         RotationDirectionUtil.Merge(friend.Dir, RotationDirectionUtil.CalcRotationDegreeFromVector(-diff)), false));
                 }
-                else if ((UIMode == UIMode.Skill || UIMode == UIMode.View) && !to.RotationOnly && friend.Friend.CanUseSkill(to.SelfPos, friend, GameManager))
+                else if ((UIMode == UIMode.Skill || UIMode == UIMode.View) && !to.RotationOnly && friend.Friend.SimulateSkill(to.SelfPos, friend, GameManager).CanUseSkill)
                 {
                     var _Skill = friend.Friend.GetSkillMapByPos(diff);
                     if (_Skill.HasValue)
@@ -340,7 +340,7 @@ namespace JSF.Game.UI
                         {
                             disabled = true;
                         }
-                        if(!_selectedFriendOnBoard.Friend.CanUseSkill(cell.SelfPos, _selectedFriendOnBoard, GameManager))
+                        if(!_selectedFriendOnBoard.Friend.SimulateSkill(cell.SelfPos, _selectedFriendOnBoard, GameManager).CanUseSkill)
                         {
                             disabled = true;
                         }
