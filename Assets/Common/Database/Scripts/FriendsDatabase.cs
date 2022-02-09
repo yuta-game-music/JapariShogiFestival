@@ -74,7 +74,7 @@ namespace JSF.Database
 
             _static_db = new FriendsDatabase();
 #if UNITY_EDITOR
-            if (Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
+            if (false && Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
             {
                 string[] files = Directory.GetFiles("Assets/ServerUtil/Database/Friends/", "Friend.asset", SearchOption.AllDirectories);
                 foreach (var file in files)
@@ -120,6 +120,42 @@ namespace JSF.Database
                     }
                 }
             }
+            // サーバーにアクセスしフレンズ一覧を読み込み
+            {
+                UnityWebRequest req = UnityWebRequest.Get("https://yutagamemusic.ddns.net/JSF/db/list.json");
+                yield return req.SendWebRequest();
+                if (req.result == UnityWebRequest.Result.Success)
+                {
+                    var text = req.downloadHandler.text;
+                    Debug.Log(text);
+                    var namelist = JsonUtility.FromJson<FriendsNameList>(text);
+                    var names = namelist.list;
+
+                    for(var i = 0; i < names.Length; i++)
+                    {
+                        var FriendName = names[i];
+                        UnityWebRequest req_f = UnityWebRequest.Get("https://yutagamemusic.ddns.net/JSF/db/"+GetPlatformID()+"/"+ FriendName);
+                        yield return req_f.SendWebRequest();
+                        if (req_f.result == UnityWebRequest.Result.Success)
+                        {
+                            using (var writeStream = File.OpenWrite(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends", FriendName)))
+                            {
+                                byte[] data = req_f.downloadHandler.data;
+                                writeStream.Write(data,0,data.Length);
+                                Debug.Log("Downloaded " + FriendName);
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning(req_f.result);
+                        }
+                    }
+                }
+                else {
+                    Debug.LogWarning(req.result);
+                }
+
+            }
 
             // PersistentPath以下のファイルを読み込み
             {
@@ -149,5 +185,25 @@ namespace JSF.Database
                 }
             }
         }
+
+        private static string GetPlatformID()
+        {
+            switch (Application.platform)
+            {
+                case RuntimePlatform.Android:
+                    return "Android";
+                case RuntimePlatform.IPhonePlayer:
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXEditor:
+                    return "iOS";
+                default:
+                    return "Windows";
+            }
+        }
+    }
+
+    public struct FriendsNameList
+    {
+        public string[] list;
     }
 }
