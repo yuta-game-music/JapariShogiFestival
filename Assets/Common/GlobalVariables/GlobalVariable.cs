@@ -21,15 +21,15 @@ namespace JSF
 
         #region BoardInfo
         public static readonly int MIN_BOARD_W = 3;
-        public static readonly int MAX_BOARD_W = 10;
+        public static readonly int MAX_BOARD_W = 5; // TODO: ボード部分がスクロールできるようになったら10に
         public static readonly int MIN_BOARD_H = 3;
-        public static readonly int MAX_BOARD_H = 10;
+        public static readonly int MAX_BOARD_H = 5; // TODO: ボード部分がスクロールできるようになったら10に
 
         public static int BoardW = 5;
         public static int BoardH = 5;
-        public static int BoardRealmHeight = 1; //自陣領域 TODO: デフォ1
-        public static int FriendsCount = 3; // TODO: デフォ3
-        public static int InitialSandstar = 0; // TODO: デフォ0
+        public static int BoardRealmHeight = 1; // 自陣領域
+        public static int FriendsCount = 3;
+        public static int InitialSandstar = 0;
         public static int GettingSandstarPerTurn = 1;
         public static int GettingSandstarOnWait = 1;
         public static int NeededSandstarForPlacingNewFriend = 5;
