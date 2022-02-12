@@ -188,7 +188,7 @@ namespace JSF.Database
                             }
                             break;
                         case FriendActionType.EndTurn:
-                            yield return GameManager.OnTurnPass();
+                            GameManager.StartCoroutine(GameManager.OnTurnPass());
                             yield break;
                     }
                     if (Action.WaitSec > 0)

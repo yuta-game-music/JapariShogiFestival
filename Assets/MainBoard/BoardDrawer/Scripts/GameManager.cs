@@ -200,14 +200,14 @@ namespace JSF.Game
             switch (PlayerInTurn.Direction)
             {
                 case RotationDirection.FORWARD:
-                    if (to.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                    if (to.SelfPos.y >= GlobalVariable.BoardRealmHeight)
                     {
                         // —ÌˆæŠO
                         throw new System.Exception("Out of Realm!");
                     }
                     break;
                 case RotationDirection.BACKWARD:
-                    if (GlobalVariable.BoardH - 1 - to.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                    if (GlobalVariable.BoardH - 1 - to.SelfPos.y >= GlobalVariable.BoardRealmHeight)
                     {
                         // —ÌˆæŠO
                         throw new System.Exception("Out of Realm!");
@@ -389,7 +389,16 @@ namespace JSF.Game
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
                 yield return friendOnBoard.Friend.OnUseSkill(cell_to.SelfPos, friendOnBoard, this);
-                //yield return OnTurnPass();
+                if (!friendOnBoard.transform.parent.TryGetComponent<Cell>(out _))
+                {
+                    // Effect‚É‚¢‚é‚Ì‚ÅCell‚É–ß‚·
+                    cell_from.Friends = null;
+                    friendOnBoard.Cell.Friends = friendOnBoard;
+                    friendOnBoard.transform.SetParent(friendOnBoard.Cell.transform, false);
+                    friendOnBoard.transform.localPosition = Vector3.zero;
+                    friendOnBoard.transform.localRotation = Quaternion.identity;
+
+                }
             }
             else
             {

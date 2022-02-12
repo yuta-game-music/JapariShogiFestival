@@ -157,7 +157,7 @@ namespace JSF.Game.UI
                 // TODO: 駒台のフレンズを選択している場合
                 if (GameManager.PlayerInTurn.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
                 {
-                    GameManager.PlaceFriendFromLounge(_selectedFriendOnBoard, cell);
+                    GameManager.StartCoroutine(GameManager.PlaceFriendFromLounge(_selectedFriendOnBoard, cell));
                     return true;
                 }
                 else
@@ -206,7 +206,7 @@ namespace JSF.Game.UI
                 {
                     if (friend.Possessor.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
                     {
-                        GameManager.PlaceFriendFromLounge(friend, to);
+                        GameManager.StartCoroutine(GameManager.PlaceFriendFromLounge(friend, to));
                     }
                     else
                     {
@@ -286,14 +286,14 @@ namespace JSF.Game.UI
                     switch (GameManager.PlayerInTurn.Direction)
                     {
                         case RotationDirection.FORWARD:
-                            if (cell.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                            if (cell.SelfPos.y >= GlobalVariable.BoardRealmHeight)
                             {
                                 // 領域外
                                 return CellDrawStatus.CannotUse;
                             }
                             break;
                         case RotationDirection.BACKWARD:
-                            if (GlobalVariable.BoardH - 1 - cell.SelfPos.y > GlobalVariable.BoardRealmHeight)
+                            if (GlobalVariable.BoardH - 1 - cell.SelfPos.y >= GlobalVariable.BoardRealmHeight)
                             {
                                 // 領域外
                                 return CellDrawStatus.CannotUse;

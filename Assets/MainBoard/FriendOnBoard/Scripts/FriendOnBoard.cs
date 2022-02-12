@@ -161,6 +161,8 @@ namespace JSF.Game
             LoungeCellObject.transform.localPosition = Vector3.zero;
             LoungeCellObject.transform.localRotation = Quaternion.Euler(0,0,RotationDirectionUtil.GetRotationDegree(player.Direction));
 
+            this.Cell.Friends = null;
+
             LoungeCell LoungeCell = LoungeCellObject.GetComponent<LoungeCell>();
             if (!LoungeCell) {
                 Debug.LogError("No LoungeCell attached to LoungeCellObject!", GameManager.GameUI.LoungeCellPrefab);
