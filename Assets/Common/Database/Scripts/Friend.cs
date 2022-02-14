@@ -220,7 +220,8 @@ namespace JSF.Database
                     Debug.LogWarning("Invalid skill detected! " + Name + "/" + SkillMap.Name + " does not have any ActionDescriptor or FriendAction!");
                     return new SkillSimulationResult() { CanUseSkill = false };
                 }
-                Vector2Int SimulatedPos = friendOnBoard.Pos.Value;
+                HashSet<Vector2Int> Trace = new HashSet<Vector2Int>() { friendOnBoard.Pos.Value };
+                HashSet<Vector2Int> AimedPos = new HashSet<Vector2Int>() { };
                 RotationDirection SimulatedDir = friendOnBoard.Dir;
                 List<FriendOnBoard> GettingFriends = new List<FriendOnBoard>();
                 foreach (var Action in SkillMap.ActionDescriptor.FriendAction)
@@ -240,7 +241,7 @@ namespace JSF.Database
                                 }
                                 else
                                 {
-                                    to_pos += SimulatedPos;
+                                    to_pos += Trace.Last();
                                 }
                                 if (!GameManager.Map.TryGetValue(to_pos, out var cell))
                                 {
@@ -254,10 +255,14 @@ namespace JSF.Database
                                 }
                                 else
                                 {
-                                    SimulatedPos = to_pos;
-                                    if (cell.Friends && !GettingFriends.Contains(cell.Friends))
+                                    Trace.Add(to_pos);
+                                    if (!AimedPos.Contains(to_pos))
                                     {
-                                        GettingFriends.Add(cell.Friends);
+                                        AimedPos.Add(to_pos);
+                                        if (cell.Friends && !GettingFriends.Contains(cell.Friends))
+                                        {
+                                            GettingFriends.Add(cell.Friends);
+                                        }
                                     }
                                 }
                             }
@@ -285,13 +290,44 @@ namespace JSF.Database
                             }
                             break;
                         case FriendActionType.MoveToLounge:
+                            {
+                                Vector2Int to_pos = RotationDirectionUtil.GetRotatedVector(Action.MoveToLounge_MoveDestinationRelative, SimulatedDir);
+                                if (Action.MoveToLounge_AddClickedPos)
+                                {
+                                    to_pos += to;
+                                }
+                                else
+                                {
+                                    to_pos += Trace.Last();
+                                }
+                                if (!GameManager.Map.TryGetValue(to_pos, out var cell))
+                                {
+                                    // 行けないセルに行こうとしたのでこのセクションは無視
+                                }
+                                else if (cell.RotationOnly)
+                                {
+                                    // 行けないセルに行こうとしたのでこのセクションは無視
+                                }
+                                else
+                                {
+                                    if (!AimedPos.Contains(to_pos))
+                                    {
+                                        AimedPos.Add(to_pos);
+                                        if (cell.Friends && !GettingFriends.Contains(cell.Friends))
+                                        {
+                                            GettingFriends.Add(cell.Friends);
+                                        }
+                                    }
+                                }
+                            }
                             break;
                         case FriendActionType.EndTurn:
                             return new SkillSimulationResult()
                             {
                                 CanUseSkill = true,
                                 GettingFriends = GettingFriends.ToArray(),
-                                LastPos = SimulatedPos,
+                                Trace = Trace.ToArray(),
+                                AimedPos = AimedPos.ToArray(),
                                 LastDir = SimulatedDir,
                             };
                     }
@@ -300,7 +336,8 @@ namespace JSF.Database
                 return new SkillSimulationResult() {
                     CanUseSkill = true,
                     GettingFriends = GettingFriends.ToArray(),
-                    LastPos = SimulatedPos,
+                    Trace = Trace.ToArray(),
+                    AimedPos = AimedPos.ToArray(),
                     LastDir = SimulatedDir,
                 };
             }
@@ -452,7 +489,9 @@ namespace JSF.Database
     {
         public bool CanUseSkill;
         public FriendOnBoard[] GettingFriends;
-        public Vector2Int LastPos;
+        public Vector2Int[] Trace;
+        public Vector2Int LastPos { get => Trace[Trace.Length - 1]; }
+        public Vector2Int[] AimedPos;
         public RotationDirection LastDir;
     }
 }
