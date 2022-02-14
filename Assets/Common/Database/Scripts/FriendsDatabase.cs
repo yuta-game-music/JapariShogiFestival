@@ -74,7 +74,7 @@ namespace JSF.Database
 
             _static_db = new FriendsDatabase();
 #if UNITY_EDITOR
-            if (false && Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
+            if (Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
             {
                 string[] files = Directory.GetFiles("Assets/ServerUtil/Database/Friends/", "Friend.asset", SearchOption.AllDirectories);
                 foreach (var file in files)
