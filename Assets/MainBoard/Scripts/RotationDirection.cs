@@ -106,5 +106,9 @@ namespace JSF.Game
         {
             return GetRotatedVector(toPos - fromPos, Invert(fromDir));
         }
+        public static Vector2Int GetAbsolutePos(Vector2Int fromPos, RotationDirection rotationDir, Vector2Int toPosRelative)
+        {
+            return fromPos + GetRotatedVector(toPosRelative, rotationDir);
+        }
     }
 }
