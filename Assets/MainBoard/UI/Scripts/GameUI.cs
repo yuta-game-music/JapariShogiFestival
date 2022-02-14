@@ -289,6 +289,7 @@ namespace JSF.Game.UI
                             if (cell.SelfPos.y >= GlobalVariable.BoardRealmHeight)
                             {
                                 // —ÌˆæŠO
+                                disabled = true;
                                 return CellDrawStatus.CannotUse;
                             }
                             break;
@@ -296,10 +297,12 @@ namespace JSF.Game.UI
                             if (GlobalVariable.BoardH - 1 - cell.SelfPos.y >= GlobalVariable.BoardRealmHeight)
                             {
                                 // —ÌˆæŠO
+                                disabled = true;
                                 return CellDrawStatus.CannotUse;
                             }
                             break;
                         default:
+                            disabled = true;
                             return CellDrawStatus.CannotUse;
                     }
                     if(GameManager.PlayerInTurn.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
