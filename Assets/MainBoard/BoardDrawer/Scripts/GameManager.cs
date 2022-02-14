@@ -353,6 +353,7 @@ namespace JSF.Game
                 AddAffectedCell(cell_to);
                 Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
 
+                yield return new WaitForSeconds(0.5f);
                 if (TurnPass)
                 {
                     yield return OnTurnPass();
@@ -422,6 +423,9 @@ namespace JSF.Game
             PlayerInTurn.SandstarAmount = Mathf.Min(PlayerInTurn.SandstarAmount, GlobalVariable.MaxSandstar);
             if (turnPass)
             {
+                // SEçƒê∂
+                Util.PlaySE(SE.SEType.Error);
+                yield return new WaitForSeconds(0.5f);
                 yield return OnTurnPass();
             }
         }
