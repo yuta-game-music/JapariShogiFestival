@@ -450,7 +450,7 @@ namespace JSF.Game.CPU
                                 Vector2Int[] moveMap = being_moved_friend.Friend.NormalMoveMap;
                                 for (var mi = 0; mi < moveMap.Length; mi++)
                                 {
-                                    if (GameManager.Map.TryGetValue(RotationDirectionUtil.GetRotatedVector(moveMap[mi], being_moved_friend.Dir) + being_moved_friend.Pos.Value, out var cell))
+                                    if (GameManager.Map.TryGetValue(RotationDirectionUtil.GetAbsolutePos(being_moved_friend.Pos.Value, being_moved_friend.Dir, moveMap[mi]), out var cell))
                                     {
                                         if (cell.Friends && cell.Friends == Player.Leader)
                                         {
