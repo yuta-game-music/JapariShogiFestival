@@ -44,7 +44,13 @@ namespace JSF
                 PlayerType=PlayerType.User,
                 PlayerColor=Color.magenta,
                 Friends=null,
-                CPUStrategy=new CPUStrategy(){Overall=CPUStrategyOverall.TryLoungeHalf, Move=CPUStrategyMove.RandomExceptMinus, Select=CPUStrategySelect.Random}
+                CPUStrategy=new CPUStrategy(){
+                    Overall=CPUStrategyOverall.TryLoungeHalf,
+                    Defense=CPUStrategyDefense.AlwaysEscape,
+                    DefenseFor=CPUStrategyDefenseFor.LeaderOnly,
+                    Move=CPUStrategyMove.RandomExceptMinus,
+                    Select=CPUStrategySelect.Random
+                }
             },
             new PlayerInfo(){
                 ID=1,
@@ -52,7 +58,13 @@ namespace JSF
                 PlayerType=PlayerType.User,
                 PlayerColor=Color.magenta,
                 Friends=null,
-                CPUStrategy=new CPUStrategy(){Overall=CPUStrategyOverall.TryLoungeHalf, Move=CPUStrategyMove.RandomExceptMinus, Select=CPUStrategySelect.Random}
+                CPUStrategy=new CPUStrategy(){
+                    Overall=CPUStrategyOverall.TryLoungeHalf,
+                    Defense=CPUStrategyDefense.AlwaysEscape,
+                    DefenseFor=CPUStrategyDefenseFor.LeaderOnly,
+                    Move=CPUStrategyMove.RandomExceptMinus,
+                    Select=CPUStrategySelect.Random
+                }
             },
         };
         #endregion

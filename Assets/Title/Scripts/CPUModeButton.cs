@@ -34,6 +34,8 @@ namespace JSF.Title
             GlobalVariable.Players[1].CPUStrategy = new Game.CPU.CPUStrategy()
             {
                 Overall = Game.CPU.CPUStrategyOverall.TryLoungeHalf,
+                Defense = Game.CPU.CPUStrategyDefense.AlwaysEscape,
+                DefenseFor = Game.CPU.CPUStrategyDefenseFor.LeaderOnly,
                 Select = Game.CPU.CPUStrategySelect.NearestToLeader,
                 Move = Game.CPU.CPUStrategyMove.ApproachToLeader
             };

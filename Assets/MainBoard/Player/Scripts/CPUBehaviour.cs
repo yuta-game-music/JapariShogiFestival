@@ -1,3 +1,4 @@
+using JSF.Database;
 using JSF.Game.Board;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,6 +19,107 @@ namespace JSF.Game.CPU
             }
 
             CPUStrategy strategy = Player.PlayerInfo?.CPUStrategy ?? new CPUStrategy();
+            FriendOnBoard being_moved_friend = null;
+
+            // 味方フレンズの情報収集と相手の動きうる範囲の計算
+
+            // 味方フレンズの一覧
+            HashSet<FriendOnBoard> our_friends = new HashSet<FriendOnBoard>();
+            // 相手の攻撃が命中するセル範囲の検索(key=場所、value=相手の攻撃フレンズ)
+            Dictionary<Vector2Int, HashSet<FriendOnBoard>> opponent_movable_pos = new Dictionary<Vector2Int, HashSet<FriendOnBoard>>();
+
+            foreach(Cell cell in GameManager.Map.Values)
+            {
+                if (cell.Friends && cell.Friends.Possessor)
+                {
+                    if (cell.Friends.Possessor == GameManager.Players[PlayerID])
+                    {
+                        our_friends.Add(cell.Friends);
+                    }
+                    else
+                    {
+                        FriendOnBoard friends_on_board = cell.Friends;
+                        Friend friend = friends_on_board.Friend;
+                        // 通常移動
+                        for (var i = 0; i < friend.NormalMoveMap.Length; i++)
+                        {
+                            var p = RotationDirectionUtil.GetAbsolutePos(friends_on_board.Pos.Value, friends_on_board.Dir, friend.NormalMoveMap[i]);
+                            if (GameManager.Map.TryGetValue(p, out Cell pcell))
+                            {
+                                if (opponent_movable_pos.TryGetValue(p, out var v))
+                                {
+                                    v.Add(friends_on_board);
+                                }
+                                else
+                                {
+                                    opponent_movable_pos.Add(p, new HashSet<FriendOnBoard>() { friends_on_board });
+                                }
+                            }
+                        }
+                        // スキル
+                        // TODO：スキル巻き添え検知
+                        SkillMap[] skill_maps = friend.Skills;
+                        foreach (var skill_map in skill_maps)
+                        {
+                            if (Player.SandstarAmount < skill_map.NeededSandstar) { continue; }
+                            foreach (var pos in skill_map.Pos)
+                            {
+                                var abs_pos = RotationDirectionUtil.GetAbsolutePos(friends_on_board.Pos.Value, friends_on_board.Dir, pos);
+                                var result = friend.SimulateSkill(abs_pos, friends_on_board, GameManager);
+                                if (result.CanUseSkill)
+                                {
+                                    foreach (var p in result.AimedPos)
+                                    {
+                                        if (GameManager.Map.TryGetValue(p, out Cell pcell))
+                                        {
+
+                                            if (opponent_movable_pos.TryGetValue(p, out var v))
+                                            {
+                                                v.Add(friends_on_board);
+                                            }
+                                            else
+                                            {
+                                                opponent_movable_pos.Add(p, new HashSet<FriendOnBoard>() { friends_on_board });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 守り戦略
+            bool defensing = false;
+            if (strategy.Defense != CPUStrategyDefense.None)
+            {
+                FriendOnBoard defendee = Player.Leader;
+                if (strategy.DefenseFor == CPUStrategyDefenseFor.All
+                    && !opponent_movable_pos.TryGetValue(Player.Leader.Pos.Value, out var aim_tmp))
+                {
+                    // リーダーが狙われていない、かつ他のフレンズが狙われているとき
+                    // 一番多くのフレンズから狙われているフレンズを対象にする
+                    int max_aimed_by_count = 0;
+                    foreach(var fob in our_friends)
+                    {
+                        var _cnt = opponent_movable_pos[fob.Pos.Value].Count;
+                        if (_cnt > max_aimed_by_count)
+                        {
+                            defendee = fob;
+                            max_aimed_by_count = _cnt;
+                        }
+                    }
+                }
+                if(opponent_movable_pos.TryGetValue(defendee.Pos.Value, out var aimed))
+                {
+                    defensing = true;
+                    being_moved_friend = defendee;
+                }
+            }
+
+            // 攻め戦略
+
             int MoveTrial = 0;
             for(var trial = 0; trial < 100; trial++)
             {
@@ -99,7 +201,6 @@ namespace JSF.Game.CPU
                 {
                     MoveTrial++;
                     // 駒を動かすよう努力
-                    FriendOnBoard selected = null;
                     #region CommonValue
                     Player.Player opponent = GameManager.Players[(PlayerID + 2) % GameManager.Players.Length];
                     Vector2Int opponentPos = opponent.Leader.Pos ?? Vector2Int.zero;
@@ -115,109 +216,114 @@ namespace JSF.Game.CPU
                     #endregion
 
                     #region FriendsSelection
-                    switch (strategy.Select)
+                    // フレンズ選択
+                    // 既に守り部分で選択されていればスキップ
+                    if (being_moved_friend == null || !being_moved_friend.Pos.HasValue)
                     {
-                        case CPUStrategySelect.Random:
-                            for(var t = 0; t < 100; t++)
-                            {
-                                Vector2Int _pos = new Vector2Int(
-                                    Random.Range(0, GameManager.BoardRenderer.W),
-                                    Random.Range(0, GameManager.BoardRenderer.H)
-                                );
-                                if(GameManager.Map.TryGetValue(_pos, out var cell))
+                        switch (strategy.Select)
+                        {
+                            case CPUStrategySelect.Random:
+                                for (var t = 0; t < 100; t++)
                                 {
-                                    if (cell.Friends)
+                                    Vector2Int _pos = new Vector2Int(
+                                        Random.Range(0, GameManager.BoardRenderer.W),
+                                        Random.Range(0, GameManager.BoardRenderer.H)
+                                    );
+                                    if (GameManager.Map.TryGetValue(_pos, out var cell))
                                     {
-                                        if(cell.Friends.Possessor == GameManager.PlayerInTurn)
+                                        if (cell.Friends)
                                         {
-                                            selected = cell.Friends;
+                                            if (cell.Friends.Possessor == GameManager.PlayerInTurn)
+                                            {
+                                                being_moved_friend = cell.Friends;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            case CPUStrategySelect.NearestToLeader:
+                                {
+                                    // 最適解で移動法が見つからなかった場合に最適解以外を使うための変数
+                                    int internal_trial = 0;
+                                    for (var r = 1; r < 10; r++)
+                                    {
+                                        for (var pii = 0; pii < r * 8; pii++)
+                                        {
+                                            // 直線向きが最も最初に確認されるべき
+                                            int pi = (pii % 4) * 2 * r + (1 - ((pii / 4) % 2) * 2) * ((pii + 4) / 8);
+                                            Vector2Int _pos = opponentPos
+                                                + RotationDirectionUtil.GetRotatedVector(PositionUtil.CalcVectorFromCirclePos(r, pi), opponent.Direction);
+                                            if (GameManager.Map.TryGetValue(_pos, out var cell))
+                                            {
+                                                if (cell.Friends)
+                                                {
+                                                    if (cell.Friends.Possessor == GameManager.PlayerInTurn)
+                                                    {
+                                                        if (internal_trial >= MoveTrial - 1)
+                                                        {
+                                                            being_moved_friend = cell.Friends;
+                                                            break;
+                                                        }
+                                                        else
+                                                        {
+                                                            internal_trial++;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (being_moved_friend != null) { break; }
+                                    }
+                                }
+                                break;
+                            case CPUStrategySelect.Backline:
+                                {
+                                    // 最適解で移動法が見つからなかった場合に最適解以外を使うための変数
+                                    int internal_trial = 0;
+                                    for (var l = 0; l < GameManager.BoardRenderer.H; l++)
+                                    {
+                                        Vector2Int[] poses = new Vector2Int[GameManager.BoardRenderer.W];
+                                        for (var x = 0; x < poses.Length; x++)
+                                        {
+                                            poses[x] = new Vector2Int(x,
+                                                (Player.Direction == RotationDirection.FORWARD) ?
+                                                l
+                                                : (GameManager.BoardRenderer.H - l - 1)
+                                            );
+                                        }
+                                        System.Array.Sort(poses, (a, b) => Random.Range(-1, 1));
+                                        for (var xi = 0; xi < poses.Length; xi++)
+                                        {
+                                            if (GameManager.Map.TryGetValue(poses[xi], out var cell))
+                                            {
+                                                if (cell.Friends)
+                                                {
+                                                    if (cell.Friends.Possessor == Player)
+                                                    {
+                                                        if (internal_trial >= MoveTrial - 1)
+                                                        {
+                                                            being_moved_friend = cell.Friends;
+                                                            break;
+                                                        }
+                                                        else
+                                                        {
+                                                            internal_trial++;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (being_moved_friend != null)
+                                        {
                                             break;
                                         }
                                     }
                                 }
-                            }
-                            break;
-                        case CPUStrategySelect.NearestToLeader:
-                            {
-                                // 最適解で移動法が見つからなかった場合に最適解以外を使うための変数
-                                int internal_trial = 0;
-                                for (var r = 1; r < 10; r++)
-                                {
-                                    for (var pii = 0; pii < r * 8; pii++)
-                                    {
-                                        // 直線向きが最も最初に確認されるべき
-                                        int pi = (pii%4)*2*r + (1-((pii/4)%2)*2)*((pii+4)/8);
-                                        Vector2Int _pos = opponentPos
-                                            + RotationDirectionUtil.GetRotatedVector(PositionUtil.CalcVectorFromCirclePos(r, pi), opponent.Direction);
-                                        if (GameManager.Map.TryGetValue(_pos, out var cell))
-                                        {
-                                            if (cell.Friends)
-                                            {
-                                                if (cell.Friends.Possessor == GameManager.PlayerInTurn)
-                                                {
-                                                    if (internal_trial >= MoveTrial-1)
-                                                    {
-                                                        selected = cell.Friends;
-                                                        break;
-                                                    }
-                                                    else
-                                                    {
-                                                        internal_trial++;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (selected != null) { break; }
-                                }
-                            }
-                            break;
-                        case CPUStrategySelect.Backline:
-                            {
-                                // 最適解で移動法が見つからなかった場合に最適解以外を使うための変数
-                                int internal_trial = 0;
-                                for (var l = 0; l < GameManager.BoardRenderer.H; l++)
-                                {
-                                    Vector2Int[] poses = new Vector2Int[GameManager.BoardRenderer.W];
-                                    for (var x = 0; x < poses.Length; x++)
-                                    {
-                                        poses[x] = new Vector2Int(x,
-                                            (Player.Direction == RotationDirection.FORWARD) ?
-                                            l
-                                            : (GameManager.BoardRenderer.H - l - 1)
-                                        );
-                                    }
-                                    System.Array.Sort(poses, (a, b) => Random.Range(-1, 1));
-                                    for (var xi = 0; xi < poses.Length; xi++)
-                                    {
-                                        if (GameManager.Map.TryGetValue(poses[xi], out var cell))
-                                        {
-                                            if (cell.Friends)
-                                            {
-                                                if (cell.Friends.Possessor == Player)
-                                                {
-                                                    if (internal_trial >= MoveTrial - 1)
-                                                    {
-                                                        selected = cell.Friends;
-                                                        break;
-                                                    }
-                                                    else
-                                                    {
-                                                        internal_trial++;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (selected != null)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                            break;
+                                break;
+                        }
                     }
-                    if (selected == null || !selected.Pos.HasValue)
+                    if (being_moved_friend == null || !being_moved_friend.Pos.HasValue)
                     {
                         // 見つからなかったらやり直し
                         continue;
@@ -233,11 +339,11 @@ namespace JSF.Game.CPU
                             if (strategyDice < 0.6f)
                             {
                                 // 通常移動
-                                Vector2Int[] moveMap = selected.Friend.NormalMoveMap;
+                                Vector2Int[] moveMap = being_moved_friend.Friend.NormalMoveMap;
                                 System.Array.Sort(moveMap, (a, b) => Random.Range(-1, 1));
                                 for(var mi = 0; mi < moveMap.Length; mi++)
                                 {
-                                    if(GameManager.Map.TryGetValue(RotationDirectionUtil.GetRotatedVector(moveMap[mi],selected.Dir)+selected.Pos.Value, out var cell))
+                                    if(GameManager.Map.TryGetValue(RotationDirectionUtil.GetRotatedVector(moveMap[mi],being_moved_friend.Dir)+being_moved_friend.Pos.Value, out var cell))
                                     {
                                         if(cell.Friends && cell.Friends == Player.Leader)
                                         {
@@ -254,27 +360,35 @@ namespace JSF.Game.CPU
                                             // 回転のみのセルに移動しようとした
                                             continue;
                                         }
-                                        GameManager.StartCoroutine(GameManager.MoveFriendWithAnimation(selected, cell,true));
+                                        if(opponent_movable_pos.TryGetValue(cell.SelfPos, out _))
+                                        {
+                                            // あえて取られる場所に移動しようとした
+                                            continue;
+                                        }
+                                        GameManager.StartCoroutine(GameManager.MoveFriendWithAnimation(being_moved_friend, cell,true));
                                         yield break;
                                     }
                                 }
-                            }else if(strategyDice < 0.7f)
+                            }
+                            else if(strategyDice < 0.7f)
                             {
                                 // 回転移動
+                                // 守り行動時には中止
+                                if (defensing) { continue; }
                                 Debug.Log("Rotation");
-                                RotationDirection[] dirs = selected.Friend.NormalRotationMap;
+                                RotationDirection[] dirs = being_moved_friend.Friend.NormalRotationMap;
                                 RotationDirection dir = dirs[Random.Range(0, dirs.Length)];
                                 GameManager.StartCoroutine(GameManager.MoveFriend(
-                                    selected,
-                                    selected.Cell,
-                                    RotationDirectionUtil.Merge(selected.Dir, dir),
+                                    being_moved_friend,
+                                    being_moved_friend.Cell,
+                                    RotationDirectionUtil.Merge(being_moved_friend.Dir, dir),
                                     true));
                                 yield break;
                             }
                             else
                             {
                                 // スキル使用
-                                SkillMap[] skillMaps = selected.Friend.Skills;
+                                SkillMap[] skillMaps = being_moved_friend.Friend.Skills;
                                 System.Array.Sort(skillMaps, (a, b) => Random.Range(-1, 1));
                                 foreach(var skillMap in skillMaps)
                                 {
@@ -284,15 +398,15 @@ namespace JSF.Game.CPU
                                         continue;
                                     }
 
-                                    Vector2Int[] poses = skillMap.Pos.Select((p)=>RotationDirectionUtil.GetRotatedVector(p,selected.Dir)).ToArray();
+                                    Vector2Int[] poses = skillMap.Pos.Select((p)=>RotationDirectionUtil.GetRotatedVector(p,being_moved_friend.Dir)).ToArray();
                                     System.Array.Sort(poses, (a, b) => Random.Range(-1, 1));
                                     foreach(var pos in poses)
                                     {
-                                        if(GameManager.Map.TryGetValue(pos + selected.Pos.Value, out var cell))
+                                        if(GameManager.Map.TryGetValue(pos + being_moved_friend.Pos.Value, out var cell))
                                         {
-                                            var info = selected.Friend.SimulateSkill(
+                                            var info = being_moved_friend.Friend.SimulateSkill(
                                                 cell.SelfPos,
-                                                selected,
+                                                being_moved_friend,
                                                 GameManager);
                                             if (info.CanUseSkill)
                                             {
@@ -306,7 +420,19 @@ namespace JSF.Game.CPU
                                                     // RandomExceptMinusのときに自分のフレンズを狩ろうとしたため中止
                                                     continue;
                                                 }
-                                                GameManager.StartCoroutine(GameManager.UseSkill(selected, cell));
+                                                if (opponent_movable_pos.TryGetValue(info.LastPos, out var attackers))
+                                                {
+                                                    // あえて取られる場所に移動しようとした
+                                                    // 自身のスキル使用中に駒置き場に行くフレンズはチェック対象外
+                                                    var copied_attackers = new HashSet<FriendOnBoard>(attackers);
+                                                    copied_attackers.RemoveWhere((fob) => {
+                                                        return info.AimedPos.Any((fob2)=> fob.Pos==fob2); });
+                                                    if (copied_attackers.Count > 0)
+                                                    {
+                                                        continue;
+                                                    }
+                                                }
+                                                GameManager.StartCoroutine(GameManager.UseSkill(being_moved_friend, cell));
                                                 yield break;
                                             }
                                         }
@@ -321,10 +447,10 @@ namespace JSF.Game.CPU
                             bool min_is_normal_move = false;
                             {
                                 // 通常移動
-                                Vector2Int[] moveMap = selected.Friend.NormalMoveMap;
+                                Vector2Int[] moveMap = being_moved_friend.Friend.NormalMoveMap;
                                 for (var mi = 0; mi < moveMap.Length; mi++)
                                 {
-                                    if (GameManager.Map.TryGetValue(RotationDirectionUtil.GetRotatedVector(moveMap[mi], selected.Dir) + selected.Pos.Value, out var cell))
+                                    if (GameManager.Map.TryGetValue(RotationDirectionUtil.GetRotatedVector(moveMap[mi], being_moved_friend.Dir) + being_moved_friend.Pos.Value, out var cell))
                                     {
                                         if (cell.Friends && cell.Friends == Player.Leader)
                                         {
@@ -334,6 +460,11 @@ namespace JSF.Game.CPU
                                         if (cell.RotationOnly)
                                         {
                                             // 回転のみのセルに移動しようとした
+                                            continue;
+                                        }
+                                        if (opponent_movable_pos.TryGetValue(cell.SelfPos, out _))
+                                        {
+                                            // あえて取られる場所に移動しようとした
                                             continue;
                                         }
                                         float now_dist;
@@ -357,7 +488,7 @@ namespace JSF.Game.CPU
                             }
                             {
                                 // スキル使用
-                                SkillMap[] skillMaps = selected.Friend.Skills;
+                                SkillMap[] skillMaps = being_moved_friend.Friend.Skills;
                                 System.Array.Sort(skillMaps, (a, b) => Random.Range(-1, 1));
                                 foreach (var skillMap in skillMaps)
                                 {
@@ -367,15 +498,15 @@ namespace JSF.Game.CPU
                                         continue;
                                     }
 
-                                    Vector2Int[] poses = skillMap.Pos.Select((p) => RotationDirectionUtil.GetRotatedVector(p, selected.Dir)).ToArray();
+                                    Vector2Int[] poses = skillMap.Pos.Select((p) => RotationDirectionUtil.GetRotatedVector(p, being_moved_friend.Dir)).ToArray();
                                     System.Array.Sort(poses, (a, b) => Random.Range(-1, 1));
                                     foreach (var pos in poses)
                                     {
-                                        if (GameManager.Map.TryGetValue(pos + selected.Pos.Value, out var cell))
+                                        if (GameManager.Map.TryGetValue(pos + being_moved_friend.Pos.Value, out var cell))
                                         {
-                                            var info = selected.Friend.SimulateSkill(
+                                            var info = being_moved_friend.Friend.SimulateSkill(
                                                 cell.SelfPos,
-                                                selected,
+                                                being_moved_friend,
                                                 GameManager);
                                             if (info.CanUseSkill)
                                             {
@@ -383,6 +514,19 @@ namespace JSF.Game.CPU
                                                 {
                                                     // 自分のリーダーを狩ろうとしたため中止
                                                     continue;
+                                                }
+                                                if (opponent_movable_pos.TryGetValue(info.LastPos, out var attackers))
+                                                {
+                                                    // あえて取られる場所に移動しようとした
+                                                    // 自身のスキル使用中に駒置き場に行くフレンズはチェック対象外
+                                                    var copied_attackers = new HashSet<FriendOnBoard>(attackers);
+                                                    copied_attackers.RemoveWhere((fob) => {
+                                                        return info.AimedPos.Any((fob2) => fob.Pos == fob2);
+                                                    });
+                                                    if (copied_attackers.Count > 0)
+                                                    {
+                                                        continue;
+                                                    }
                                                 }
                                                 float now_dist;
                                                 if (strategy.Move == CPUStrategyMove.ApproachToAnyone)
@@ -409,24 +553,27 @@ namespace JSF.Game.CPU
                             {
                                 if (min_is_normal_move)
                                 {
-                                    GameManager.StartCoroutine(GameManager.MoveFriendWithAnimation(selected, min_pos,true));
+                                    GameManager.StartCoroutine(GameManager.MoveFriendWithAnimation(being_moved_friend, min_pos,true));
                                     yield break;
                                 }
                                 else
                                 {
-                                    GameManager.StartCoroutine(GameManager.UseSkill(selected, min_pos));
+                                    GameManager.StartCoroutine(GameManager.UseSkill(being_moved_friend, min_pos));
                                     yield break;
                                 }
                             }
                             else
                             {
                                 // 移動先が見つからなかった：回転
-                                RotationDirection[] dirs = selected.Friend.NormalRotationMap;
+
+                                // 守り状態なら回転などしていられないので中止
+                                if (defensing) { continue; }
+                                RotationDirection[] dirs = being_moved_friend.Friend.NormalRotationMap;
                                 RotationDirection dir = dirs[Random.Range(0, dirs.Length)];
                                 GameManager.StartCoroutine(GameManager.MoveFriend(
-                                    selected,
-                                    selected.Cell,
-                                    RotationDirectionUtil.Merge(selected.Dir, dir),
+                                    being_moved_friend,
+                                    being_moved_friend.Cell,
+                                    RotationDirectionUtil.Merge(being_moved_friend.Dir, dir),
                                     true));
                                 yield break;
                             }
@@ -448,6 +595,8 @@ namespace JSF.Game.CPU
     public struct CPUStrategy
     {
         public CPUStrategyOverall Overall;
+        public CPUStrategyDefense Defense;
+        public CPUStrategyDefenseFor DefenseFor;
         public CPUStrategySelect Select;
         public CPUStrategyMove Move;
     }
@@ -458,6 +607,18 @@ namespace JSF.Game.CPU
         MoveOnly100, // 駒置き場のフレンズは一切出さず基本的に移動 100回試行してどれもダメなら待機
         TryLoungeHalf, // 50%の確率で駒置き場のフレンズを出す、その際に置く場所をランダムに決め、置けなければ再度50%の抽選から 外れたら移動試行、それも5回ダメなら待機
         TryLounge50, // 駒置き場にフレンズがいたらランダムに置き場を決定 50回まで試行しダメなら出さない
+    }
+    public enum CPUStrategyDefense
+    {
+        None, // 守る行動を一切しない
+        AlwaysEscape, // 逃げるのみ(逃げられなかったら守る行動をしない)
+        RemoveAttacker, // 攻撃してくるフレンズを駒置き場に送るよう努力する
+        RemoveAttackerWithDraw, // ↑のためなら引き分けになっても構わない
+    }
+    public enum CPUStrategyDefenseFor
+    {
+        LeaderOnly, // リーダーが狙われているときのみ対処
+        All // 誰かが狙われていたら対処
     }
     // 動かすフレンズの選び方
     public enum CPUStrategySelect
