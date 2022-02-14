@@ -21,7 +21,7 @@ namespace JSF.Result
             Init();
 #if UNITY_EDITOR
             // TODO: デバッグ用のため削除
-            /*
+            
             for(var i = 0; i < 2; i++)
             {
                 var strategy = GlobalVariable.Players[i].CPUStrategy = new Game.CPU.CPUStrategy()
@@ -33,7 +33,7 @@ namespace JSF.Result
                 Debug.Log("Player"+(i+1)+" "+strategy.Overall+" "+strategy.Select+" "+strategy.Move);
             }
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainBoard");
-            */
+            
 #endif
         }
 

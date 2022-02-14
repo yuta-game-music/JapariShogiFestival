@@ -19,16 +19,18 @@ namespace JSF.Title
             GlobalVariable.Tutorial = null;
 
             // TODO: デバッグ用なので消す
-            /*
-            Time.timeScale = 4;
+            
+            Time.timeScale = 1;
             GlobalVariable.Players[0].PlayerType = Game.Player.PlayerType.CPU;
             GlobalVariable.Players[0].CPUStrategy = new Game.CPU.CPUStrategy()
             {
                 Overall=Game.CPU.CPUStrategyOverall.MoveOnly100,
-                Select=Game.CPU.CPUStrategySelect.NearestToLeader,
+                Defense = Game.CPU.CPUStrategyDefense.AlwaysEscape,
+                DefenseFor = Game.CPU.CPUStrategyDefenseFor.LeaderOnly,
+                Select =Game.CPU.CPUStrategySelect.NearestToLeader,
                 Move=Game.CPU.CPUStrategyMove.ApproachToLeader
             };
-            */
+            
 
             GlobalVariable.Players[1].PlayerType = Game.Player.PlayerType.CPU;
             GlobalVariable.Players[1].CPUStrategy = new Game.CPU.CPUStrategy()
