@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 using JSF.Common;
 using JSF.Game.Logger;
 using JSF.Game.Tutorial;
+using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -35,6 +36,10 @@ namespace JSF.Game
 
         private bool init = false;
         private bool StartNextTurn = false;
+
+        private HashSet<Cell> _affected_cells = new HashSet<Cell>();
+        public Cell[] AffectedCells { get => _affected_cells.ToArray(); }
+        private bool _clean_affected_cells = true;
 
         public void Start()
         {
@@ -173,6 +178,7 @@ namespace JSF.Game
                         friendOnBoard.InitialSetup(Cell, dir, possessor, isLeader);
 
                         Cell.Friends = friendOnBoard;
+
                     }
 
                     return true;
@@ -223,6 +229,7 @@ namespace JSF.Game
                 Destroy(Friend.Cell.gameObject);
                 Friend.Possessor.SandstarAmount -= GlobalVariable.NeededSandstarForPlacingNewFriend;
                 Util.PlaySE(SE.SEType.PlaceFriend);
+                AddAffectedCell(to);
                 yield return new WaitForSeconds(0.3f);
                 StartCoroutine(OnTurnPass());
                 yield break;
@@ -262,6 +269,7 @@ namespace JSF.Game
             {
                 LoungeCell.Setup(player, fob);
                 fob.MoveToCell(LoungeCell);
+                AddAffectedCell(LoungeCell);
             }
             fob.ChangePossessor(player);
             fobobject.transform.SetParent(LoungeCell.transform, false);
@@ -330,6 +338,7 @@ namespace JSF.Game
             }
             if (Map.TryGetValue(friendOnBoard.Pos.Value, out Cell cell_from))
             {
+                AddAffectedCell(cell_from);
                 cell_from.Friends = null;
                 friendOnBoard.MoveToCell(cell_to);
                 friendOnBoard.transform.SetParent(cell_to.transform, false);
@@ -341,6 +350,7 @@ namespace JSF.Game
                     yield return MoveToLounge(cell_to.Friends, GoToLoungeOf);
                 }
                 cell_to.Friends = friendOnBoard;
+                AddAffectedCell(cell_to);
                 Debug.Log("Moved friend " + friendOnBoard.Friend.Name + ": " + cell_from.SelfPos + "->" + cell_to.SelfPos);
 
                 if (TurnPass)
@@ -456,14 +466,19 @@ namespace JSF.Game
 
         public IEnumerator OnTurnPass()
         {
+
             // サンドスター補給
             PlayerInTurn.SandstarAmount += GlobalVariable.GettingSandstarPerTurn;
             PlayerInTurn.SandstarAmount = Mathf.Min(PlayerInTurn.SandstarAmount, GlobalVariable.MaxSandstar);
 
             // ターンを次に進める
             PlayerInTurnID = (PlayerInTurnID + 1) % Players.Length;
+
+            // 操作されたセルをリセット（ただし実際に消えるのは次に「操作されたセル」が発生したとき）
+            _clean_affected_cells = true;
+
             // 条件チェック
-            if(DoesAnyoneWin(out Player.Player Winner))
+            if (DoesAnyoneWin(out Player.Player Winner))
             {
                 Debug.Log("Winner: " + Winner);
                 yield return GameUI.PlayFinish(Winner);
@@ -520,6 +535,19 @@ namespace JSF.Game
                 Winner = null;
             }
             return true;
+        }
+
+        private void AddAffectedCell(Cell cell)
+        {
+            if (_clean_affected_cells)
+            {
+                _affected_cells.Clear();
+                _clean_affected_cells = false;
+            }
+            if (!_affected_cells.Contains(cell))
+            {
+                _affected_cells.Add(cell);
+            }
         }
 
 #if UNITY_EDITOR

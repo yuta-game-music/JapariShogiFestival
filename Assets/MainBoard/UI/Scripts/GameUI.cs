@@ -391,7 +391,14 @@ namespace JSF.Game.UI
                 }
                 else
                 {
-                    return CellDrawStatus.Normal;
+                    if (GameManager.AffectedCells.Contains(cell))
+                    {
+                        return CellDrawStatus.Selected;
+                    }
+                    else
+                    {
+                        return CellDrawStatus.Normal;
+                    }
                 }
             }
         }
