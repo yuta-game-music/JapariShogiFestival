@@ -119,25 +119,31 @@ namespace JSF.Database
                     Directory.CreateDirectory(LOCAL_FRIENDS_DATA_PATH);
                 }
                 LoadingStatus = "デフォルトデータを書き出しています…";
-                string[] files = BetterStreamingAssets.GetFiles(Path.Combine("database", "friends"), "*", SearchOption.TopDirectoryOnly);
-                foreach (var file in files)
+                try
                 {
-                    if (file.EndsWith(".meta")) { continue; }
-
-                    string FriendName = Path.GetFileName(file);
-
-                    using (var readStream = BetterStreamingAssets.OpenRead(file))
+                    string[] files = BetterStreamingAssets.GetFiles(Path.Combine("database", "friends"), "*", SearchOption.TopDirectoryOnly);
+                    foreach (var file in files)
                     {
-                        using (var writeStream = File.OpenWrite(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends", FriendName)))
+                        if (file.EndsWith(".meta")) { continue; }
+
+                        string FriendName = Path.GetFileName(file);
+
+                        using (var readStream = BetterStreamingAssets.OpenRead(file))
                         {
-                            while (true)
+                            using (var writeStream = File.OpenWrite(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends", FriendName)))
                             {
-                                int b = readStream.ReadByte();
-                                if (b < 0) { break; }
-                                writeStream.WriteByte((byte)b);
+                                while (true)
+                                {
+                                    int b = readStream.ReadByte();
+                                    if (b < 0) { break; }
+                                    writeStream.WriteByte((byte)b);
+                                }
                             }
                         }
                     }
+                }catch(Exception e)
+                {
+                    Debug.LogException(e);
                 }
             }
             // サーバーにアクセスしフレンズ一覧を読み込み
