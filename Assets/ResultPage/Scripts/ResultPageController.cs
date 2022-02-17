@@ -4,6 +4,7 @@ using UnityEngine;
 using JSF.Common.PlayerView;
 using JSF.Common.UI;
 using System;
+using JSF.Database;
 
 namespace JSF.Result
 {
@@ -21,19 +22,25 @@ namespace JSF.Result
             Init();
 #if UNITY_EDITOR
             // TODO: デバッグ用のため削除
-            
-            for(var i = 0; i < 2; i++)
+            /*
             {
-                var strategy = GlobalVariable.Players[i].CPUStrategy = new Game.CPU.CPUStrategy()
+                for (var i = 0; i < 2; i++)
                 {
-                    Overall = (Game.CPU.CPUStrategyOverall)UnityEngine.Random.Range(0, Enum.GetValues(typeof(Game.CPU.CPUStrategyOverall)).Length),
-                    Select = Game.CPU.CPUStrategySelect.NearestToLeader,//(Game.CPU.CPUStrategySelect)UnityEngine.Random.Range(0, Enum.GetValues(typeof(Game.CPU.CPUStrategySelect)).Length),
-                    Move = Game.CPU.CPUStrategyMove.ApproachToLeader//(Game.CPU.CPUStrategyMove)UnityEngine.Random.Range(0, Enum.GetValues(typeof(Game.CPU.CPUStrategyMove)).Length),
-                };
-                Debug.Log("Player"+(i+1)+" "+strategy.Overall+" "+strategy.Select+" "+strategy.Move);
+                    var strategy = GlobalVariable.Players[i].CPUStrategy = new Game.CPU.CPUStrategy()
+                    {
+                        Overall = Game.CPU.CPUStrategyOverall.BestEvaluation,//(Game.CPU.CPUStrategyOverall)UnityEngine.Random.Range(0, Enum.GetValues(typeof(Game.CPU.CPUStrategyOverall)).Length),
+                        Select = Game.CPU.CPUStrategySelect.NearestToLeader,//(Game.CPU.CPUStrategySelect)UnityEngine.Random.Range(0, Enum.GetValues(typeof(Game.CPU.CPUStrategySelect)).Length),
+                        Move = Game.CPU.CPUStrategyMove.ApproachToLeader//(Game.CPU.CPUStrategyMove)UnityEngine.Random.Range(0, Enum.GetValues(typeof(Game.CPU.CPUStrategyMove)).Length),
+                    };
+                    Debug.Log("Player" + (i + 1) + " " + strategy.Overall + " " + strategy.Select + " " + strategy.Move);
+                    for (var f = 0; f < GlobalVariable.FriendsCount; f++)
+                    {
+                        GlobalVariable.Players[i].Friends[f] = FriendsDatabase.Get().Friends[UnityEngine.Random.Range(0, FriendsDatabase.Get().Friends.Length)];
+                    }
+                }
+                UnityEngine.SceneManagement.SceneManager.LoadScene("MainBoard");
             }
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MainBoard");
-            
+            */
 #endif
         }
 
