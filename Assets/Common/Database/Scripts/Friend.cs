@@ -7,6 +7,7 @@ using JSF.Game.Player;
 using System.Linq;
 using System;
 using UnityEngine.Serialization;
+using JSF.Game.Logger;
 
 namespace JSF.Database
 {
@@ -204,14 +205,172 @@ namespace JSF.Database
             }
         }
 
+        /// <summary>
+        /// 通常移動時のシミュレーションを行う関数
+        /// </summary>
+        /// <param name="base_status">シミュレーション前のスナップショット</param>
+        /// <param name="from">どのセルのフレンズを移動させるか</param>
+        /// <param name="to_pos">どこに移動させるか</param>
+        /// <param name="GameManager">現在のGameManager(盤面情報など状態によって変わらないものにのみアクセスします)</param>
+        /// <returns>シミュレーション結果</returns>
+        public Snapshot SimulateNormalMove(Snapshot base_status, Vector2Int from, Vector2Int to_pos, GameManager GameManager)
+        {
+
+            var _actor_info = base_status.GetFriendInformationAt(from);
+            if (!_actor_info.HasValue)
+            {
+                Debug.LogWarning("No friend at " + from + "!");
+                return null;
+            }
+            var actor_info = _actor_info.Value;
+            if (!actor_info.Pos.HasValue)
+            {
+                Debug.LogWarning("Friend " + actor_info.Friend.Name + " is at lounge!");
+                return null;
+            }
+            RotationDirection fromDir = actor_info.Dir;
+
+            HashSet<Vector2Int> Trace = new HashSet<Vector2Int>() { actor_info.Pos.Value };
+            HashSet<Vector2Int> AimedPos = new HashSet<Vector2Int>() { };
+            RotationDirection SimulatedDir = actor_info.Dir;
+
+            // 全フレンズの一覧
+            List<SnapshotFriend> Friends = base_status.Friends.ToList();
+            // 今から動くフレンズは先に抜いておく
+            Friends.Remove(actor_info);
+            // フレンズの一覧に位置インデックスを付加したもの(駒置き場のフレンズは含まない)
+            Dictionary<Vector2Int, SnapshotFriend> FriendsOnBoardDatabase = Friends
+                .Where((f) => f.Pos.HasValue)
+                .ToDictionary((f) => f.Pos.Value);
+
+            // 取得したフレンズの一覧
+            List<SnapshotFriend> GettingFriends = new List<SnapshotFriend>();
+
+            {
+                if (!GameManager.Map.TryGetValue(to_pos, out var cell))
+                {
+                    // 行けないセルに行こうとしたので中止
+                    return null;
+                }
+                else if (cell.RotationOnly)
+                {
+                    // 行けないセルに行こうとしたので中止
+                    return null;
+                }
+                else
+                {
+                    Trace.Add(to_pos);
+                    if (!AimedPos.Contains(to_pos))
+                    {
+                        AimedPos.Add(to_pos);
+                        var _friends_on_destination_cell = base_status.GetFriendInformationAt(to_pos);
+                        if (_friends_on_destination_cell.HasValue && !GettingFriends.Contains(_friends_on_destination_cell.Value))
+                        {
+                            if (FriendsOnBoardDatabase.TryGetValue(to_pos, out var prev_status))
+                            {
+                                FriendsOnBoardDatabase.Remove(to_pos);
+
+                                Friends.Remove(prev_status);
+                                Friends.Add(new SnapshotFriend()
+                                {
+                                    Pos = null,
+                                    Dir = GameManager.Players[actor_info.PossessorID].Direction,
+                                    Friend = prev_status.Friend,
+                                    IsLeader = prev_status.IsLeader,
+                                    PossessorID = actor_info.PossessorID,
+                                });
+
+                                GettingFriends.Add(prev_status);
+                            }
+                        }
+                    }
+                }
+            }
+            // 取り除いておいた自身を最後に加える
+            Friends.Add(new SnapshotFriend()
+            {
+                Pos = Trace.Last(),
+                Dir = SimulatedDir,
+                Friend = actor_info.Friend,
+                IsLeader = actor_info.IsLeader,
+                PossessorID = actor_info.PossessorID
+            });
+
+            // Snapshot用データ作成
+            Snapshot after_snapshot = new Snapshot(
+                base_status.PlayerInTurnID,
+                base_status.SandstarAmounts.ToArray(),
+                Friends.ToArray());
+
+            return after_snapshot;
+        }
+
+        /// <summary>
+        /// 通常回転時のシミュレーションを行う関数
+        /// </summary>
+        /// <param name="base_status">シミュレーション前のスナップショット</param>
+        /// <param name="friend_pos">どのセルのフレンズを移動させるか</param>
+        /// <param name="rotation">どの向きに回転させるか(絶対回転量)</param>
+        /// <param name="GameManager">現在のGameManager(盤面情報など状態によって変わらないものにのみアクセスします)</param>
+        /// <returns>シミュレーション結果</returns>
+        public Snapshot SimulateRotation(Snapshot base_status, Vector2Int friend_pos, RotationDirection rotation, GameManager GameManager)
+        {
+            SnapshotFriend[] friends = base_status.Friends.ToArray();
+            for(var i = 0; i < friends.Length; i++)
+            {
+                if(friends[i].Pos == friend_pos)
+                {
+                    friends[i].Dir = rotation;
+                }
+            }
+            return new Snapshot(base_status.PlayerInTurnID, base_status.SandstarAmounts, friends);
+        }
+
         // スキルが発動できる場所にいるか等を計算
         public SkillSimulationResult SimulateSkill(Vector2Int to, FriendOnBoard friendOnBoard, GameManager GameManager)
         {
-            Vector2Int from = friendOnBoard.Pos.Value;
-            RotationDirection fromDir = friendOnBoard.Dir;
+            SkillSimulationResult res = SimulateSkill(new Snapshot(GameManager), friendOnBoard.Pos.Value, to, GameManager);
+            if (res.CanUseSkill)
+            {
+                return new SkillSimulationResult()
+                {
+                    CanUseSkill = true,
+                    LastDir = res.LastDir,
+                    Trace = res.Trace,
+                    AimedPos = res.AimedPos,
+                    GettingFriends = res.AimedPos.Select((pos) => GameManager.Map[pos]?.Friends).Where((d) => d != null).ToArray(),
+                    Snapshot = res.Snapshot
+                };
+            }
+            else
+            {
+                return new SkillSimulationResult()
+                {
+                    CanUseSkill = false
+                };
+            }
+        }
 
-            Vector2Int RelativePos = RotationDirectionUtil.GetRelativePos(friendOnBoard.Pos.Value, friendOnBoard.Dir, to);
-            SkillMap? _SkillMap = friendOnBoard.Friend.GetSkillMapByPos(RelativePos);
+        public SkillSimulationResult SimulateSkill(Snapshot base_status, Vector2Int from, Vector2Int to, GameManager GameManager)
+        {
+
+            var _actor_info = base_status.GetFriendInformationAt(from);
+            if (!_actor_info.HasValue)
+            {
+                Debug.LogWarning("No friend at " + from + "!");
+                return new SkillSimulationResult() { CanUseSkill = false };
+            }
+            var actor_info = _actor_info.Value;
+            if (!actor_info.Pos.HasValue)
+            {
+                Debug.LogWarning("Friend " + actor_info.Friend.Name + " is at lounge!");
+                return new SkillSimulationResult() { CanUseSkill = false };
+            }
+
+            Vector2Int RelativePos = RotationDirectionUtil.GetRelativePos(actor_info.Pos.Value, actor_info.Dir, to);
+            RotationDirection fromDir = actor_info.Dir;
+
+            SkillMap? _SkillMap = actor_info.Friend.GetSkillMapByPos(RelativePos);
             if (_SkillMap.HasValue)
             {
                 var SkillMap = _SkillMap.Value;
@@ -220,10 +379,22 @@ namespace JSF.Database
                     Debug.LogWarning("Invalid skill detected! " + Name + "/" + SkillMap.Name + " does not have any ActionDescriptor or FriendAction!");
                     return new SkillSimulationResult() { CanUseSkill = false };
                 }
-                HashSet<Vector2Int> Trace = new HashSet<Vector2Int>() { friendOnBoard.Pos.Value };
+                HashSet<Vector2Int> Trace = new HashSet<Vector2Int>() { actor_info.Pos.Value };
                 HashSet<Vector2Int> AimedPos = new HashSet<Vector2Int>() { };
-                RotationDirection SimulatedDir = friendOnBoard.Dir;
-                List<FriendOnBoard> GettingFriends = new List<FriendOnBoard>();
+                RotationDirection SimulatedDir = actor_info.Dir;
+
+                // 全フレンズの一覧
+                List<SnapshotFriend> Friends = base_status.Friends.ToList();
+                // 今から動くフレンズは先に抜いておく
+                Friends.Remove(actor_info);
+                // フレンズの一覧に位置インデックスを付加したもの(駒置き場のフレンズは含まない)
+                Dictionary<Vector2Int, SnapshotFriend> FriendsOnBoardDatabase = Friends
+                    .Where((f) => f.Pos.HasValue)
+                    .ToDictionary((f) => f.Pos.Value);
+
+                // 取得したフレンズの一覧
+                List<SnapshotFriend> GettingFriends = new List<SnapshotFriend>();
+
                 foreach (var Action in SkillMap.ActionDescriptor.FriendAction)
                 {
                     switch (Action.ActionType)
@@ -259,9 +430,25 @@ namespace JSF.Database
                                     if (!AimedPos.Contains(to_pos))
                                     {
                                         AimedPos.Add(to_pos);
-                                        if (cell.Friends && !GettingFriends.Contains(cell.Friends))
+                                        var _friends_on_destination_cell = base_status.GetFriendInformationAt(to_pos);
+                                        if (_friends_on_destination_cell.HasValue && !GettingFriends.Contains(_friends_on_destination_cell.Value))
                                         {
-                                            GettingFriends.Add(cell.Friends);
+                                            if(FriendsOnBoardDatabase.TryGetValue(to_pos, out var prev_status))
+                                            {
+                                                FriendsOnBoardDatabase.Remove(to_pos);
+
+                                                Friends.Remove(prev_status);
+                                                Friends.Add(new SnapshotFriend()
+                                                {
+                                                    Pos = null,
+                                                    Dir = GameManager.Players[actor_info.PossessorID].Direction,
+                                                    Friend = prev_status.Friend,
+                                                    IsLeader = prev_status.IsLeader,
+                                                    PossessorID = actor_info.PossessorID,
+                                                });
+
+                                                GettingFriends.Add(prev_status);
+                                            }
                                         }
                                     }
                                 }
@@ -283,7 +470,7 @@ namespace JSF.Database
                                         break;
                                     case FriendAction.Rotation_RelativeTo.Fixed:
                                     default:
-                                        dir = GameManager.PlayerInTurn.Direction;
+                                        dir = GameManager.Players[base_status.PlayerInTurnID].Direction;
                                         break;
                                 }
                                 SimulatedDir = RotationDirectionUtil.Merge(dir, Action.Rotate_RotationDirection);
@@ -313,32 +500,59 @@ namespace JSF.Database
                                     if (!AimedPos.Contains(to_pos))
                                     {
                                         AimedPos.Add(to_pos);
-                                        if (cell.Friends && !GettingFriends.Contains(cell.Friends))
+                                        var _friends_on_destination_cell = base_status.GetFriendInformationAt(to_pos);
+                                        if (_friends_on_destination_cell.HasValue && !GettingFriends.Contains(_friends_on_destination_cell.Value))
                                         {
-                                            GettingFriends.Add(cell.Friends);
+                                            if (FriendsOnBoardDatabase.TryGetValue(to_pos, out var prev_status))
+                                            {
+                                                FriendsOnBoardDatabase.Remove(to_pos);
+
+                                                Friends.Remove(prev_status);
+                                                Friends.Add(new SnapshotFriend()
+                                                {
+                                                    Pos = null,
+                                                    Dir = GameManager.Players[actor_info.PossessorID].Direction,
+                                                    Friend = prev_status.Friend,
+                                                    IsLeader = prev_status.IsLeader,
+                                                    PossessorID = actor_info.PossessorID,
+                                                });
+
+                                                GettingFriends.Add(prev_status);
+                                            }
                                         }
                                     }
                                 }
                             }
                             break;
                         case FriendActionType.EndTurn:
-                            return new SkillSimulationResult()
-                            {
-                                CanUseSkill = true,
-                                GettingFriends = GettingFriends.ToArray(),
-                                Trace = Trace.ToArray(),
-                                AimedPos = AimedPos.ToArray(),
-                                LastDir = SimulatedDir,
-                            };
+                            break;
                     }
                 }
+                // 取り除いておいた自身を最後に加える
+                Friends.Add(new SnapshotFriend()
+                {
+                    Pos = Trace.Last(),
+                    Dir = SimulatedDir,
+                    Friend = actor_info.Friend,
+                    IsLeader = actor_info.IsLeader,
+                    PossessorID = actor_info.PossessorID
+                });
 
-                return new SkillSimulationResult() {
+                // Snapshot用データ作成
+                int[] sandstar_amounts = base_status.SandstarAmounts.ToArray();
+                sandstar_amounts[actor_info.PossessorID] -= SkillMap.NeededSandstar;
+                Snapshot after_snapshot = new Snapshot(
+                    base_status.PlayerInTurnID,
+                    sandstar_amounts,
+                    Friends.ToArray());
+
+                return new SkillSimulationResult()
+                {
                     CanUseSkill = true,
-                    GettingFriends = GettingFriends.ToArray(),
                     Trace = Trace.ToArray(),
                     AimedPos = AimedPos.ToArray(),
                     LastDir = SimulatedDir,
+                    Snapshot = after_snapshot
                 };
             }
             else
@@ -493,5 +707,6 @@ namespace JSF.Database
         public Vector2Int LastPos { get => Trace[Trace.Length - 1]; }
         public Vector2Int[] AimedPos;
         public RotationDirection LastDir;
+        public Snapshot Snapshot;
     }
 }

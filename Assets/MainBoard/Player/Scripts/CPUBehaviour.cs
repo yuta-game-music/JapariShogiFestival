@@ -1,5 +1,6 @@
 using JSF.Database;
 using JSF.Game.Board;
+using JSF.Game.Logger;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,14 @@ namespace JSF.Game.CPU
             }
 
             CPUStrategy strategy = Player.PlayerInfo?.CPUStrategy ?? new CPUStrategy();
+
+            // 評価値の計算を行うものは全く別の処理のため別関数にて定義
+            if(strategy.Overall == CPUStrategyOverall.BestEvaluation)
+            {
+                yield return ExecForEvaluation(GameManager, PlayerID);
+                yield break;
+            }
+
             FriendOnBoard being_moved_friend = null;
 
             // 味方フレンズの情報収集と相手の動きうる範囲の計算
@@ -589,6 +598,171 @@ namespace JSF.Game.CPU
             GameManager.StartCoroutine(GameManager.SkipTurn());
             yield break;
         }
+
+        private static IEnumerator ExecForEvaluation(GameManager GameManager, int PlayerID)
+        {
+            var snapshot_tmp = new Snapshot(GameManager);
+            // 予め他のプレイヤーのサンドスター量を増やしておく
+            var snapshot = new Snapshot(
+                snapshot_tmp.PlayerInTurnID,
+                snapshot_tmp.SandstarAmounts.Select((v,id)=>((id%2==0&&id!=PlayerID) ? v+GlobalVariable.GettingSandstarPerTurn : v)).ToArray(),
+                snapshot_tmp.Friends);
+            var myFriendsOnBoard = snapshot.Friends.Where((f) => f.PossessorID == PlayerID && f.Pos.HasValue);
+            var myFriendsOnLobby = snapshot.Friends.Where((f) => f.PossessorID == PlayerID && !f.Pos.HasValue);
+
+            // 自分の持つ手について検証
+            // 初期値は待機時のスコア
+            float best_score = snapshot_tmp.GetEvaluation(PlayerID,GameManager)-10;
+            Vector2Int? best_pos_from = null;
+            Vector2Int? best_pos_to = null;
+            RotationDirection? best_dir = null;
+            bool isSkill = false;
+
+            // 既に盤面にあるフレンズを動かす場合
+            foreach (var Friend in myFriendsOnBoard)
+            {
+                foreach (var Movement in Friend.Friend.NormalMoveMap)
+                {
+                    var to_pos = RotationDirectionUtil.GetAbsolutePos(Friend.Pos.Value, Friend.Dir, Movement);
+                    var simulated_result = Friend.Friend.SimulateNormalMove(snapshot, Friend.Pos.Value, to_pos, GameManager);
+                    if (simulated_result != null)
+                    {
+                        var score = simulated_result.GetEvaluation(PlayerID, GameManager);
+                        if (score > best_score)
+                        {
+                            best_score = score;
+                            best_pos_from = Friend.Pos.Value;
+                            best_pos_to = to_pos;
+                            best_dir = null;
+                            isSkill = false;
+                        }
+                    }
+                }
+                foreach(var Rotation in Friend.Friend.NormalRotationMap)
+                {
+                    var to_dir = RotationDirectionUtil.Merge(Friend.Dir, Rotation);
+                    var simulated_result = Friend.Friend.SimulateRotation(snapshot, Friend.Pos.Value, to_dir, GameManager);
+                    if (simulated_result != null)
+                    {
+                        var score = simulated_result.GetEvaluation(PlayerID, GameManager);
+                        if (score > best_score)
+                        {
+                            best_score = score;
+                            best_pos_from = Friend.Pos.Value;
+                            best_pos_to = null;
+                            best_dir = to_dir;
+                            isSkill = false;
+                        }
+                    }
+                }
+                foreach (var Skill in Friend.Friend.Skills)
+                {
+                    if (snapshot.SandstarAmounts[PlayerID] < Skill.NeededSandstar)
+                    {
+                        // サンドスター不足のためスキップ
+                        continue;
+                    }
+
+                    foreach (var to_pos_relative in Skill.Pos)
+                    {
+                        var to_pos = RotationDirectionUtil.GetAbsolutePos(Friend.Pos.Value, Friend.Dir, to_pos_relative);
+                        SkillSimulationResult res = Friend.Friend.SimulateSkill(snapshot, Friend.Pos.Value, to_pos, GameManager);
+                        if (res.CanUseSkill)
+                        {
+                            var score = res.Snapshot.GetEvaluation(PlayerID, GameManager);
+                            if (score > best_score)
+                            {
+                                best_score = score;
+                                best_pos_from = Friend.Pos.Value;
+                                best_pos_to = to_pos;
+                                best_dir = null;
+                                isSkill = true;
+                            }
+                        }
+                    }
+                }
+                // 負荷対策
+                yield return new WaitForEndOfFrame();
+            }
+
+            // 新たに盤面にフレンズを出す場合
+            if (myFriendsOnLobby.Count() > 0 && snapshot.SandstarAmounts[PlayerID]>=GlobalVariable.NeededSandstarForPlacingNewFriend)
+            {
+                foreach (var cell in GameManager.Players[PlayerID].GetCellsInMyRealm(GameManager))
+                {
+                    var pos = cell.SelfPos;
+                    if (snapshot.GetFriendInformationAt(pos) == null)
+                    {
+                        var simulated = snapshot.SimulatePlaceFriend(PlayerID, myFriendsOnLobby.First().Friend, pos, GameManager);
+
+                        var score = simulated.GetEvaluation(PlayerID, GameManager);
+                        if (score > best_score)
+                        {
+                            best_score = score;
+                            best_pos_from = null;
+                            best_pos_to = pos;
+                            best_dir = null;
+                            isSkill = false;
+                        }
+                    }
+                }
+            }
+
+            // 実際に行動
+            FriendOnBoard fob = (best_pos_from.HasValue && GameManager.Map.TryGetValue(best_pos_from.Value, out _))?GameManager.Map[best_pos_from.Value].Friends : null;
+            Cell cell_to = (best_pos_to.HasValue && GameManager.Map.TryGetValue(best_pos_to.Value, out _)) ? GameManager.Map[best_pos_to.Value] : null;
+            Debug.Log($"Pattern: {best_pos_from}->{best_pos_to}[{best_dir}] (skill={isSkill}) :Score={best_score}");
+            if (best_pos_from != null)
+            {
+                if (best_pos_to != null)
+                {
+                    if (!isSkill)
+                    {
+                        // 通常移動
+                        GameManager.StartCoroutine(GameManager.MoveFriendWithAnimation(fob, cell_to, true));
+                        yield break;
+                    }
+                    else
+                    {
+                        // スキル発動
+                        GameManager.StartCoroutine(GameManager.UseSkill(fob, cell_to));
+                        yield break;
+                    }
+                }
+                else
+                {
+                    if (best_dir.HasValue)
+                    {
+                        // その場回転
+                        GameManager.StartCoroutine(GameManager.MoveFriend(
+                            fob,
+                            fob.Cell,
+                            best_dir.Value,
+                            true));
+                        yield break;
+                    }
+                }
+            }
+            else
+            {
+                if (best_pos_to != null)
+                {
+                    // 配置
+                    FriendOnBoard fob_placing = GameManager.Players[PlayerID].GetFriendsOnLoungeById(Random.Range(0,GameManager.Players[PlayerID].LoungeSize));
+                    GameManager.StartCoroutine(GameManager.PlaceFriendFromLounge(fob_placing, cell_to));
+                    yield break;
+                }
+                else
+                {
+                    // 待機
+                    GameManager.StartCoroutine(GameManager.SkipTurn());
+                    yield break;
+                }
+            }
+            Debug.LogError("No such pattern!");
+            // 待機
+            GameManager.StartCoroutine(GameManager.SkipTurn());
+        }
     }
 
 
@@ -607,6 +781,7 @@ namespace JSF.Game.CPU
         MoveOnly100, // 駒置き場のフレンズは一切出さず基本的に移動 100回試行してどれもダメなら待機
         TryLoungeHalf, // 50%の確率で駒置き場のフレンズを出す、その際に置く場所をランダムに決め、置けなければ再度50%の抽選から 外れたら移動試行、それも5回ダメなら待機
         TryLounge50, // 駒置き場にフレンズがいたらランダムに置き場を決定 50回まで試行しダメなら出さない
+        BestEvaluation, // 評価が最も高くなる行動をする
     }
     public enum CPUStrategyDefense
     {

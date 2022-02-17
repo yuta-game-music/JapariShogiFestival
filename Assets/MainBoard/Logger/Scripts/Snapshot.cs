@@ -1,18 +1,19 @@
 using JSF.Database;
 using JSF.Game.Board;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace JSF.Game.Logger
 {
     public class Snapshot
     {
-        int playerInTurnID;
-        int[] sandstarAmounts = new int[2];
-        SnapshotFriend[] Friends;
+        public int PlayerInTurnID { get; private set; }
+        public int[] SandstarAmounts { get; private set; } = new int[4];
+        public SnapshotFriend[] Friends { get; private set; }
         public Snapshot(GameManager manager)
         {
-            playerInTurnID = manager.PlayerInTurnID;
+            PlayerInTurnID = manager.PlayerInTurnID;
 
             List<SnapshotFriend> Friends = new List<SnapshotFriend>();
 
@@ -23,9 +24,9 @@ namespace JSF.Game.Logger
                     Friends.Add(new SnapshotFriend()
                     {
                         Pos = v,
-                        friend = manager.Map[v].Friends.Friend,
-                        RotationDirection= manager.Map[v].Friends.Dir,
-                        PossessorID = manager.Map[v].Friends.Possessor.PlayerInfo?.ID ?? -1,
+                        Friend = manager.Map[v].Friends.Friend,
+                        Dir= manager.Map[v].Friends.Dir,
+                        PossessorID = (manager.Map[v].Friends.Possessor.PlayerInfo?.ID * 2) ?? -1,
                         IsLeader = manager.Map[v].Friends.IsLeader
                     });
                 }
@@ -38,66 +39,197 @@ namespace JSF.Game.Logger
                     Friends.Add(new SnapshotFriend()
                     {
                         Pos = null,
-                        friend = c.Friends.Friend,
-                        RotationDirection = RotationDirection.FORWARD,
-                        PossessorID = p.PlayerInfo?.ID ?? -1
+                        Friend = c.Friends.Friend,
+                        Dir = RotationDirection.FORWARD,
+                        PossessorID = (p.PlayerInfo?.ID * 2) ?? -1
                     });
                 }
-                sandstarAmounts[p.PlayerInfo?.ID ?? 0] = p.SandstarAmount;
+                SandstarAmounts[(p.PlayerInfo?.ID * 2) ?? 0] = p.SandstarAmount;
             }
             this.Friends = Friends.ToArray();
+        }
+        public Snapshot(int playerInTurnID, int[] sandstarAmounts, SnapshotFriend[] snapshotFriends)
+        {
+            PlayerInTurnID = playerInTurnID;
+            SandstarAmounts = sandstarAmounts;
+            Friends = snapshotFriends;
         }
 
         public void Restore(GameManager manager)
         {
-            manager.PlayerInTurnID = playerInTurnID;
+            manager.PlayerInTurnID = PlayerInTurnID;
             // 一度盤上のフレンズを全員消す
-
-            foreach (var v in manager.Map.Keys)
-            {
-                if (manager.Map[v].Friends)
-                {
-                    GameObject.Destroy(manager.Map[v].Friends.gameObject);
-                    manager.Map[v].Friends = null;
-                }
-            }
+            manager.ClearAllFriends();
             foreach (var p in manager.Players)
             {
-                if (p.PlayerType == Player.PlayerType.Cellien) { continue; }
-                foreach (var c in p.Lounge.GetComponentsInChildren<LoungeCell>())
-                {
-                    GameObject.Destroy(c.gameObject);
-                }
                 // サンドスター量はここで戻してしまう
-                p.SandstarAmount = sandstarAmounts[p.PlayerInfo?.ID ?? 0];
+                p.SandstarAmount = SandstarAmounts[(p.PlayerInfo?.ID * 2) ?? 0];
 
-                // リーダー情報もここで消す(再配置の際に二重配置エラーを出すため)
-                p.Leader = null;
             }
-
             // 再配置
             foreach (var f in Friends)
             {
                 if (f.Pos.HasValue)
                 {
                     // 盤上に置く
-                    manager.PlaceFriend(f.Pos.Value, f.RotationDirection, f.friend, manager.Players[2 * f.PossessorID], f.IsLeader);
+                    manager.PlaceFriend(f.Pos.Value, f.Dir, f.Friend, manager.Players[2 * f.PossessorID], f.IsLeader);
                 }
                 else
                 {
                     // 所持フレンズに置く
-                    manager.PlaceFriendAtLounge(f.friend, manager.Players[2 * f.PossessorID]);
+                    manager.PlaceFriendAtLounge(f.Friend, manager.Players[2 * f.PossessorID]);
                 }
             }
+        }
+
+        public SnapshotFriend? GetFriendInformationAt(Vector2Int pos)
+        {
+            foreach (var f in Friends)
+            {
+                if (f.Pos == pos)
+                {
+                    return f;
+                }
+            }
+            return null;
+        }
+        /// <summary>
+        /// 盤面の評価を返します。
+        /// </summary>
+        /// <param name="PlayerID">どのプレイヤーについての評価を計算するか(GameManager.PlayersのID)</param>
+        /// <returns>盤面の評価結果</returns>
+        
+        public float GetEvaluation(int PlayerID, GameManager manager)
+        {
+            var score = GetEvaluationForOne(PlayerID, manager);
+            score -= GetEvaluationForOne((PlayerID + 2) % manager.Players.Length, manager);
+            return score;
+        }
+        private float GetEvaluationForOne(int PlayerID, GameManager manager)
+        {
+            float score = 0;
+
+            SnapshotFriend[] opponentLeaders = Friends.Where((f) => f.PossessorID != PlayerID && f.IsLeader && f.Pos.HasValue).ToArray();
+            var myFriendsOnBoard = Friends.Where((f) => f.PossessorID == PlayerID && f.Pos.HasValue);
+
+            // 自分の持つフレンズについて相手の大将に近いほど+向きが大将のほうに向いているほど高スコア
+            foreach (var opponentLeader in opponentLeaders)
+            {
+                score += myFriendsOnBoard
+                    .Select((f) =>
+                    {
+                        PositionUtil.CalcCirclePos((opponentLeader.Pos.Value - f.Pos.Value), out int r, out int rot);
+                        int rot_max = r * 8;
+                        return 
+                            Mathf.Max(5-r,1)*1f // 位置
+                            + (1-Mathf.Abs((float)(r+rot_max/2)%rot_max-rot_max/2)/(rot_max/2))*0.3f// 向き(0に近いほうがいい)
+                            ;
+                    })
+                    .Sum();
+            }
+
+            // 自分がフレンズを多数持っているほど高スコア
+            score += Friends.Where((f) => f.PossessorID == PlayerID).Count() * 5f;
+
+            // 相手が大将を持っていない状態なら最高スコア
+            if(Friends.Where((f)=>f.PossessorID!=PlayerID && f.IsLeader && f.Pos.HasValue).Count() == 0)
+            {
+                score += 10000;
+            }
+            // 自分が大将を持っていない状態ならスコアをどん底に
+            if (Friends.Where((f) => f.PossessorID == PlayerID && f.IsLeader && f.Pos.HasValue).Count() == 0)
+            {
+                score -= 100000;
+            }
+
+            // 自分が次の手でフレンズを多数取れれば高スコア
+            foreach (var Friend in myFriendsOnBoard)
+            {
+                foreach(var Movement in Friend.Friend.NormalMoveMap)
+                {
+                    var to_pos = RotationDirectionUtil.GetAbsolutePos(Friend.Pos.Value, Friend.Dir, Movement);
+                    var friend = GetFriendInformationAt(to_pos);
+                    if (friend.HasValue && friend.Value.PossessorID!=PlayerID)
+                    {
+                        if (friend.Value.IsLeader)
+                        {
+                            // 大将を取れるなら高スコア
+                            score += 100;
+                        }
+                        else
+                        {
+                            // 大将でなくても取れるならスコアアップ
+                            score += 2;
+                        }
+                    }
+                }
+                foreach(var Skill in Friend.Friend.Skills)
+                {
+                    if(SandstarAmounts[PlayerID] < Skill.NeededSandstar)
+                    {
+                        // サンドスター不足のためスキップ
+                        continue;
+                    }
+
+                    foreach(var to_pos_relative in Skill.Pos)
+                    {
+                        var to_pos = RotationDirectionUtil.GetAbsolutePos(Friend.Pos.Value, Friend.Dir, to_pos_relative);
+                        SkillSimulationResult res = Friend.Friend.SimulateSkill(this, Friend.Pos.Value, to_pos, manager);
+                        if (res.CanUseSkill)
+                        {
+                            score += res.AimedPos
+                                .Select((p) => GetFriendInformationAt(p))
+                                .Where((fi) => fi.HasValue)
+                                .Select((fi) =>
+                                {
+                                    var value = fi.Value.IsLeader ? 100:2;
+                                    var pm = fi.Value.PossessorID == PlayerID ? -1 : 1;
+                                    return value * pm;
+                                })
+                                .Sum();
+                        }
+                    }
+                }
+            }
+
+            return score;
+        }
+
+        public Snapshot SimulatePlaceFriend(int PlayerID, Friend friend, Vector2Int pos, GameManager manager)
+        {
+            var friends = Friends.ToArray();
+            for(var i = 0; i < friends.Length; i++)
+            {
+                var f = friends[i];
+                if (f.PossessorID != PlayerID) { continue; }
+                if (f.Pos != null) { continue; }
+                if (f.Friend != friend) { continue; }
+
+                friends[i].Pos = pos;
+                break;
+            }
+            return new Snapshot(PlayerInTurnID, SandstarAmounts, friends);
         }
     }
 
     public struct SnapshotFriend
     {
         public int PossessorID; // -1でセルリアン
-        public Friend friend;
-        public RotationDirection RotationDirection;
+        public Friend Friend;
+        public RotationDirection Dir;
         public Vector2Int? Pos; // 駒置き場のフレンズはPos=null
         public bool IsLeader;
+
+        public override string ToString()
+        {
+            if (Pos.HasValue)
+            {
+                return Friend.Name + " @"+Pos.Value+" Possessor=" + PossessorID;
+            }
+            else
+            {
+                return Friend.Name + " @<Lounge> Possessor="+PossessorID;
+            }
+        }
     }
 }

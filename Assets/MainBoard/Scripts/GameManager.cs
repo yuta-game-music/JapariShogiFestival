@@ -477,6 +477,8 @@ namespace JSF.Game
 
         public IEnumerator OnTurnStart()
         {
+            // TODO: デバッグ用の機能
+
             GameUI.ResetView();
             switch (PlayerInTurn.PlayerType)
             {
