@@ -20,6 +20,7 @@ namespace JSF.Game
         public GameObject FriendOnBoardPrefab;
 
         public Player.Player[] Players;
+        public List<FriendOnBoard> AllFriends { get; private set; } = new List<FriendOnBoard>();
         
         public int PlayerInTurnID = 0;
         public Player.Player PlayerInTurn { get => Players[PlayerInTurnID]; }
@@ -162,6 +163,44 @@ namespace JSF.Game
             }
         }
 
+        public void ClearAllFriends()
+        {
+            FriendOnBoard[] friends = AllFriends.ToArray();
+            foreach(var friend in friends)
+            {
+                RemoveFriend(friend);
+            }
+            foreach (var p in Players)
+            {
+                // リーダー情報もここで消す(再配置の際に二重配置エラーを出すため)
+                p.Leader = null;
+            }
+
+        }
+
+        public void RemoveFriend(FriendOnBoard friend)
+        {
+            if (friend.Cell)
+            {
+                if(friend.Cell is LoungeCell)
+                {
+                    // 駒置き場なら駒置き場ごと消す
+                    Destroy(friend.Cell.gameObject);
+                }
+                else
+                {
+                    // 盤面なら盤面のセルを残して(でも参照は切って)消す
+                    friend.Cell.Friends = null;
+                    Destroy(friend.gameObject);
+                }
+            }
+            else
+            {
+                Debug.LogError("friend "+friend+" was not on any cell",friend);
+            }
+            AllFriends.Remove(friend);
+        }
+
         public bool PlaceFriend(Vector2Int pos, RotationDirection dir, Friend friend, Player.Player possessor, bool isLeader, bool tryOnly = false)
         {
             if(Map.TryGetValue(pos, out Cell Cell))
@@ -178,7 +217,7 @@ namespace JSF.Game
                         friendOnBoard.InitialSetup(Cell, dir, possessor, isLeader);
 
                         Cell.Friends = friendOnBoard;
-
+                        AllFriends.Add(friendOnBoard);
                     }
 
                     return true;
@@ -275,6 +314,8 @@ namespace JSF.Game
             fobobject.transform.SetParent(LoungeCell.transform, false);
             fobobject.transform.localPosition = Vector3.zero;
             fobobject.transform.localRotation = Quaternion.identity;
+
+            AllFriends.Add(fob);
         }
         public IEnumerator MoveFriend(FriendOnBoard friendOnBoard, Vector2Int to, RotationDirection dir, bool TurnPass=false, Player.Player GoToLoungeOf=null)
         {
@@ -553,6 +594,7 @@ namespace JSF.Game
                 _affected_cells.Add(cell);
             }
         }
+
 
 #if UNITY_EDITOR
         private void CheckPlayerData()
