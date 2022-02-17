@@ -4,6 +4,8 @@ using UnityEngine;
 using System.IO;
 using UnityEngine.Networking;
 using JSF.Common;
+using System;
+using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -15,6 +17,14 @@ namespace JSF.Database
         private List<Friend> friends = new List<Friend>();
         public Friend[] Friends { get => friends.ToArray(); }
         private static FriendsDatabase _static_db;
+
+        public static string LoadingStatus { get; private set; } = "フレンズデータベースを更新しています…";
+
+        public static readonly string LOCAL_DATA_PATH = Path.Combine(Util.GetSavedFileDirectoryPath(), "database");
+        public static readonly string LOCAL_FRIENDS_DATA_PATH = Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends");
+        public static readonly string LOCAL_JSON_PATH = Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "local.json");
+        public static readonly string DATABASE_JSON_URL = "https://yutagamemusic.ddns.net/JSF/db/list.json";
+        public static readonly string DATABASE_URL = "https://yutagamemusic.ddns.net/JSF/db/";
 
         public Friend GetFriend(string name)
         {
@@ -71,34 +81,44 @@ namespace JSF.Database
 
         public static IEnumerator Load()
         {
-
+            LoadingStatus = "フレンズデータベースを更新しています…";
             _static_db = new FriendsDatabase();
 #if UNITY_EDITOR
-            if (Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
+            if (false && Application.platform == RuntimePlatform.WindowsEditor && Directory.Exists("Assets/ServerUtil/Database/Friends"))
             {
                 string[] files = Directory.GetFiles("Assets/ServerUtil/Database/Friends/", "Friend.asset", SearchOption.AllDirectories);
-                foreach (var file in files)
+                LoadingStatus = $"デバッグ用のデータベースから読み込んでいます…(0/{files.Length})";
+                for (var i = 0; i < files.Length; i++)
                 {
+                    var file = files[i];
                     Debug.Log(file);
                     Friend f = AssetDatabase.LoadAssetAtPath<Friend>(file);
                     if (f != null)
                     {
                         _static_db.friends.Add(f);
                         Debug.Log("Loaded " + f.Name);
+                        LoadingStatus = $"デバッグ用のデータベースから読み込んでいます…({i+1}/{files.Length})";
                     }
                     else
                     {
                         Debug.LogWarning("not a friend!");
                     }
                 }
+                LoadingStatus = "読み込みが完了しました";
                 yield break;
             }
 #endif
+            // ローカルデータ用のフォルダ作成
+            if (!Directory.Exists(LOCAL_DATA_PATH))
+            {
+                Directory.CreateDirectory(LOCAL_DATA_PATH);
+            }
             // StreamingAssetsのデータをPersistentPath以下に書き込み
             {
-                if(!Directory.Exists(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends"))){
-                    Directory.CreateDirectory(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends"));
+                if(!Directory.Exists(LOCAL_FRIENDS_DATA_PATH)){
+                    Directory.CreateDirectory(LOCAL_FRIENDS_DATA_PATH);
                 }
+                LoadingStatus = "デフォルトデータを書き出しています…";
                 string[] files = BetterStreamingAssets.GetFiles(Path.Combine("database", "friends"), "*", SearchOption.TopDirectoryOnly);
                 foreach (var file in files)
                 {
@@ -122,23 +142,69 @@ namespace JSF.Database
             }
             // サーバーにアクセスしフレンズ一覧を読み込み
             {
-                UnityWebRequest req = UnityWebRequest.Get("https://yutagamemusic.ddns.net/JSF/db/list.json");
+                LoadingStatus = "データベース情報をサーバーから取得しています…";
+                UnityWebRequest req = UnityWebRequest.Get(DATABASE_JSON_URL);
                 yield return req.SendWebRequest();
                 if (req.result == UnityWebRequest.Result.Success)
                 {
                     var text = req.downloadHandler.text;
                     Debug.Log(text);
-                    var namelist = JsonUtility.FromJson<FriendsNameList>(text);
-                    var names = namelist.list;
+                    var namelist = JsonUtility.FromJson<NameList.FriendsNameList>(text);
+                    var downloaded_names = namelist.list;
+                    var names = namelist.list.ToList();
 
-                    for(var i = 0; i < names.Length; i++)
+                    // ローカルに保存してあるjsonデータと比較
+                    if(File.Exists(LOCAL_JSON_PATH))
                     {
+                        using(var local_file = File.OpenRead(LOCAL_JSON_PATH))
+                        {
+                            var stream = new StreamReader(local_file);
+                            try
+                            {
+                                var local_db = JsonUtility.FromJson<NameList.FriendsNameList>(stream.ReadToEnd());
+                                var local_list = local_db.list;
+                                foreach(var local_friend in local_list)
+                                {
+                                    var _comp = names.Where((f) => f.name == local_friend.name);
+                                    if (_comp.Count() == 0)
+                                    {
+                                        // 該当フレンズがサーバー側から消去されている→ローカルでも削除
+                                        Debug.Log("[DB change]<Deleted>"+local_friend.name);
+                                    }
+                                    else
+                                    {
+                                        var comp = _comp.First();
+                                        if (local_friend.last_update != comp.last_update)
+                                        {
+                                            // データが更新されている→更新リストに残したまま
+                                            Debug.Log("[DB change]<Updated>" + local_friend.name);
+                                        }
+                                        else
+                                        {
+                                            // データが変化していない→更新リストから消す
+                                            names.Remove(comp);
+                                        }
+                                    }
+                                }
+
+                            }catch(System.Exception e)
+                            {
+                                Debug.LogException(e);
+                            }
+                            
+                        }
+                    }
+
+                    bool successful = true;
+                    for (var i = 0; i < names.Count(); i++)
+                    {
+                        LoadingStatus = $"新規データをダウンロードしています…({i+1}/{names.Count()})";
                         var FriendName = names[i];
-                        UnityWebRequest req_f = UnityWebRequest.Get("https://yutagamemusic.ddns.net/JSF/db/"+GetPlatformID()+"/"+ FriendName);
+                        UnityWebRequest req_f = UnityWebRequest.Get(DATABASE_URL + GetPlatformID()+"/"+ FriendName.name);
                         yield return req_f.SendWebRequest();
                         if (req_f.result == UnityWebRequest.Result.Success)
                         {
-                            using (var writeStream = File.OpenWrite(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends", FriendName)))
+                            using (var writeStream = File.OpenWrite(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends", FriendName.name)))
                             {
                                 byte[] data = req_f.downloadHandler.data;
                                 writeStream.Write(data,0,data.Length);
@@ -148,11 +214,31 @@ namespace JSF.Database
                         else
                         {
                             Debug.LogWarning(req_f.result);
+                            successful = false;
+                        }
+                    }
+
+                    if (successful)
+                    {
+                        // ローカルのjsonファイルを上書き
+                        using (var fwp = File.Open(LOCAL_JSON_PATH,FileMode.Create))
+                        {
+                            using (var writer = new StreamWriter(fwp))
+                            {
+                                var writing_data = new NameList.FriendsNameList()
+                                {
+                                    list = downloaded_names,
+                                };
+                                writer.WriteLine(JsonUtility.ToJson(writing_data));
+                            }
                         }
                     }
                 }
-                else {
+                else
+                {
+                    LoadingStatus = $"データベース読み込み時にエラーが発生しました：{req.result}";
                     Debug.LogWarning(req.result);
+                    yield return new WaitForSeconds(1f);
                 }
 
             }
@@ -162,8 +248,10 @@ namespace JSF.Database
                 if(Directory.Exists(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends")))
                 {
                     string[] files = Directory.GetFiles(Path.Combine(Util.GetSavedFileDirectoryPath(), "database", "friends"), "*", SearchOption.TopDirectoryOnly);
-                    foreach (var file in files)
+                    for (var i = 0; i < files.Length; i++)
                     {
+                        var file = files[i];
+                        LoadingStatus = $"ファイルを読み込んでいます…({i+1}/{files.Length})";
                         if (file.EndsWith(".meta")) { continue; }
                         var loading = AssetBundle.LoadFromFileAsync(file);
                         yield return new WaitUntil(() => loading.isDone);
@@ -184,6 +272,7 @@ namespace JSF.Database
                     }
                 }
             }
+            LoadingStatus = "読み込みが完了しました";
         }
 
         private static string GetPlatformID()
@@ -202,8 +291,18 @@ namespace JSF.Database
         }
     }
 
-    public struct FriendsNameList
+    namespace NameList
     {
-        public string[] list;
+        public struct FriendsNameList
+        {
+            public Friend[] list;
+        }
+
+        [Serializable]
+        public struct Friend
+        {
+            public string name;
+            public long last_update;
+        }
     }
 }
