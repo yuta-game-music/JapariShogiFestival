@@ -21,7 +21,7 @@ namespace JSF.Game
         public Player.Player Possessor { get; private set; }
         public bool IsLeader { get; private set; }
         public Vector2Int? Pos { get => (!(Cell is LoungeCell)) ? (Cell?.SelfPos) : null; }
-        public int? LoungeID { get => (!(Cell is LoungeCell)) ? (Util.GetNthChild(transform)) : (int?)null; }
+        public int? LoungeID { get => ((Cell is LoungeCell)) ? (Util.GetNthChild(transform)) : (int?)null; }
         public Cell Cell { get; private set; }
         public RotationDirection Dir { get; private set; }
 
