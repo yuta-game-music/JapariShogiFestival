@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using JSF.Database;
+using UnityEngine.EventSystems;
 
 namespace JSF.Common.FriendsSelector
 {
-    public class FriendsSelectorController : MonoBehaviour
+    public class FriendsSelectorController : MonoBehaviour, IPointerClickHandler
     {
         Animator anim;
         public Transform FriendsGrid;
@@ -38,7 +39,10 @@ namespace JSF.Common.FriendsSelector
             }
 
             yield return new WaitUntil(()=>selected);
-            GlobalVariable.Players[PlayerID].Friends[FriendsPos] = selectedFriend;
+            if (selectedFriend!=null)
+            {
+                GlobalVariable.Players[PlayerID].Friends[FriendsPos] = selectedFriend;
+            }
             anim.SetBool("Show", false);
             yield return new WaitUntil(() => anim.GetCurrentAnimatorStateInfo(ShowHideAnimatorLayer).IsName("Hidden"));
             yield return null;
@@ -66,6 +70,12 @@ namespace JSF.Common.FriendsSelector
         public void OnSelectFriend(Friend friend)
         {
             selectedFriend = friend;
+            selected = true;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            selectedFriend = null;
             selected = true;
         }
     }
