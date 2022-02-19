@@ -9,9 +9,15 @@ namespace JSF.Common
     public class Loader : MonoBehaviour
     {
         public bool AutoMoveToTitle = true;
+        public AppVersion AppVersion;
+
+        // 各種データベース
+        public Game.Tutorial.TutorialDatabase TutorialDatabase;
+
         private void Start()
         {
             DontDestroyOnLoad(this);
+            GlobalVariable.Loader = this;
 
             // 初期ロード
             BetterStreamingAssets.Initialize();

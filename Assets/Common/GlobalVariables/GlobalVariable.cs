@@ -6,6 +6,7 @@ using JSF.Database;
 using JSF.Game;
 using JSF.Game.Tutorial;
 using JSF.Game.CPU;
+using JSF.Common;
 
 namespace JSF
 {
@@ -13,6 +14,10 @@ namespace JSF
     {
         #region DebugInfo
         public static bool DebugMode = true;
+        #endregion
+
+        #region Loader
+        public static Loader Loader;
         #endregion
 
         #region Tutorial
