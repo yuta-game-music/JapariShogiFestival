@@ -1,16 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace JSF.Game.Tutorial
 {
-    public class TutorialDatabase
+    [CreateAssetMenu(fileName = "TutorialDatabase.asset", menuName = "JSF/Tutorial/Database")]
+    public class TutorialDatabase : ScriptableObject
     {
         public static Tutorial[] tutorials = new Tutorial[]
         {
             // チュートリアル1 移動と狩り
             new Tutorial()
             {
+                GuideIconID = 0,
                 InitialBoardStatus = new BoardStatus()
                 {
                     Size=new Vector2Int(3,3),
@@ -165,6 +168,7 @@ namespace JSF.Game.Tutorial
             // チュートリアル2 回転と特殊スキル
             new Tutorial()
             {
+                GuideIconID=1,
                 InitialBoardStatus = new BoardStatus()
                 {
                     Size=new Vector2Int(4,3),
@@ -212,7 +216,7 @@ namespace JSF.Game.Tutorial
                     new TutorialNode(){
                         Text="例えばこの子、少し右に傾いているでしょ？",
                         FocusedCell=new Vector2Int[]{new Vector2Int(0,0) },
-                        TextPosAnchor=new Vector2(0.8f,0.8f)
+                        TextPosAnchor=new Vector2(0.7f,0.8f)
                     },
                     new TutorialNode(){
                         Text="この向きによって、駒の動ける場所が変わるんだ！\n試しにこの子を回転させてみよー！",
@@ -330,10 +334,13 @@ namespace JSF.Game.Tutorial
 
 
         };
+
+        public Sprite[] tutorialImages = new Sprite[0];
     }
 
     public struct Tutorial
     {
+        public int GuideIconID;
         public BoardStatus InitialBoardStatus;
         public TutorialNode[] Nodes;
         public int InitialSandstarAmount;

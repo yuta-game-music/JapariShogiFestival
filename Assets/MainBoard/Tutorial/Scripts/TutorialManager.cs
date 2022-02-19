@@ -8,6 +8,7 @@ using JSF.Common;
 using JSF.Game.Board;
 using JSF.Game.Logger;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace JSF.Game.Tutorial
 {
@@ -19,6 +20,7 @@ namespace JSF.Game.Tutorial
         public Animator BackgroundAnimator;
         public RectTransform MessageObjectTF;
         public TMP_Text Text;
+        public Image GuideIcon;
         private FriendOnBoard[] TutorialFriendsOnBoard = new FriendOnBoard[0];
         private TutorialFriend[] TutorialFriendsPositionData = new TutorialFriend[0];
         Tutorial Tutorial;
@@ -33,6 +35,19 @@ namespace JSF.Game.Tutorial
 
         public IEnumerator OnStartTutorial(Tutorial tutorial)
         {
+            // 各種データの読み込み
+            Loader loader = GlobalVariable.Loader;
+            if (!loader)
+            {
+                // データベースが読み込めないためデータベースが必要な項目は無視
+                Debug.LogWarning("Cannot load Tutorial Database; some functions are limited.");
+            }
+            else
+            {
+                GuideIcon.sprite = loader.TutorialDatabase?.tutorialImages[tutorial.GuideIconID];
+
+            }
+
             Vector2Int boardSize = tutorial.InitialBoardStatus.Size;
             // Boardの初期化を待つ
             yield return new WaitUntil(() => GameManager.Map.Keys.Count >= (boardSize.x+2)*(boardSize.y+2));
