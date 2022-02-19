@@ -22,7 +22,7 @@ namespace JSF.Title
             {
                 var obj = Instantiate(FriendsPrefab);
                 obj.transform.SetParent(transform, false);
-                obj.transform.localPosition = new Vector3(0, h, 0);
+                obj.transform.localPosition = new Vector3(0, -h, 0);
 
                 CreditFriendsCell cell = obj.GetComponent<CreditFriendsCell>();
                 cell?.SetFriend(f);
