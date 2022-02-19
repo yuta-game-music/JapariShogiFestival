@@ -157,8 +157,16 @@ namespace JSF.Game.UI
                 // TODO: 駒台のフレンズを選択している場合
                 if (GameManager.PlayerInTurn.SandstarAmount >= GlobalVariable.NeededSandstarForPlacingNewFriend)
                 {
-                    GameManager.StartCoroutine(GameManager.PlaceFriendFromLounge(_selectedFriendOnBoard, cell));
-                    return true;
+                    if(!(cell is LoungeCell) && !cell.RotationOnly)
+                    {
+                        GameManager.StartCoroutine(GameManager.PlaceFriendFromLounge(_selectedFriendOnBoard, cell));
+                        return true;
+                    }
+                    else
+                    {
+                        // 選択解除
+                        return false;
+                    }
                 }
                 else
                 {
@@ -183,7 +191,7 @@ namespace JSF.Game.UI
         }
         public void OnStartDragFriendOnBoard(FriendOnBoard friend, Cell from)
         {
-            friend.transform.SetParent(transform, true);
+            friend.transform.SetParent(GameManager.EffectObject.transform, true);
             if (_selectedFriendOnBoard != friend)
             {
                 // ドラッグし始めたフレンズが未選択だった場合はUIModeをリセット
@@ -200,7 +208,23 @@ namespace JSF.Game.UI
             _selectedFriendOnBoard = null;
             friend.transform.SetParent(from.transform, true);
             friend.transform.localPosition = Vector3.zero;
-            if(friend.Cell is LoungeCell)
+            if (from == to)
+            {
+                // 同じ場所にドロップ→キャンセルとみなして中断
+                return;
+            }
+            if(to is LoungeCell)
+            {
+                // 駒置き場には置けないのでキャンセル
+                return;
+            }
+            if (to.RotationOnly)
+            {
+                // 回転用セルには置けないのでキャンセル
+                return;
+            }
+
+            if (friend.Cell is LoungeCell)
             {
                 if (to != null)
                 {
