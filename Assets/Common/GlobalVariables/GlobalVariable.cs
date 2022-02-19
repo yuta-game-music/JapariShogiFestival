@@ -21,7 +21,7 @@ namespace JSF
         #endregion
 
         #region Tutorial
-        public static Tutorial? Tutorial = TutorialDatabase.tutorials[0]; 
+        public static Tutorial? Tutorial = null; 
         #endregion
 
         #region BoardInfo
@@ -30,8 +30,8 @@ namespace JSF
         public static readonly int MIN_BOARD_H = 3;
         public static readonly int MAX_BOARD_H = 5; // TODO: ボード部分がスクロールできるようになったら10に
 
-        public static int BoardW = 5;
-        public static int BoardH = 5;
+        public static int BoardW = 4;
+        public static int BoardH = 4;
         public static int BoardRealmHeight = 1; // 自陣領域
         public static int FriendsCount = 3;
         public static int InitialSandstar = 0;
