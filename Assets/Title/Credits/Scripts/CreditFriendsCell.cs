@@ -12,22 +12,52 @@ namespace JSF.Title
         public TMP_Text FriendsNameText;
         public Image FriendsImage;
 
-        public TMP_Text AuthorText;
-        public Image AuthorImage;
+        public TMP_Text ImageAuthorText;
+        public Image ImageAuthorImage;
+
+        public TMP_Text TextAuthorText;
+        public Image TextAuthorImage;
+        
+        public TMP_Text BehaviourAuthorText;
+        public Image BehaviourAuthorImage;
 
         public void SetFriend(Friend f)
         {
             FriendsNameText.text = f.Name;
             FriendsImage.sprite = f.ThumbImage;
 
-            AuthorText.text = "çÏé“ÅF"+(string.IsNullOrEmpty(f.AuthorName) ? "(ìΩñºäÛñ])" : f.AuthorName);
-            if (f.AuthorImage == null)
             {
-                Destroy(AuthorImage.gameObject);
+                ImageAuthorText.text = "illust byÅF" + (string.IsNullOrEmpty(f.ImageAuthor.Name) ? "(ìΩñºäÛñ])" : f.ImageAuthor.Name);
+                if (f.ImageAuthor.Image == null)
+                {
+                    Destroy(ImageAuthorImage.gameObject);
+                }
+                else
+                {
+                    ImageAuthorImage.sprite = f.ImageAuthor.Image;
+                }
             }
-            else
             {
-                AuthorImage.sprite = f.AuthorImage;
+                TextAuthorText.text = "text byÅF" + (string.IsNullOrEmpty(f.TextAuthor.Name) ? "(ìΩñºäÛñ])" : f.TextAuthor.Name);
+                if (f.TextAuthor.Image == null)
+                {
+                    Destroy(TextAuthorImage.gameObject);
+                }
+                else
+                {
+                    TextAuthorImage.sprite = f.TextAuthor.Image;
+                }
+            }
+            {
+                BehaviourAuthorText.text = "behaviour byÅF" + (string.IsNullOrEmpty(f.BehaviourAuthor.Name) ? "(ìΩñºäÛñ])" : f.BehaviourAuthor.Name);
+                if (f.BehaviourAuthor.Image == null)
+                {
+                    Destroy(BehaviourAuthorImage.gameObject);
+                }
+                else
+                {
+                    BehaviourAuthorImage.sprite = f.BehaviourAuthor.Image;
+                }
             }
         }
     }

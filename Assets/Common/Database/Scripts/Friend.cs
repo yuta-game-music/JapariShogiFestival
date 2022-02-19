@@ -694,8 +694,9 @@ namespace JSF.Database
         public SkillMap[] Skills;
 
         #region Credit
-        public string AuthorName;
-        public Sprite AuthorImage;
+        public Author ImageAuthor;
+        public Author TextAuthor;
+        public Author BehaviourAuthor;
         #endregion
     }
 
@@ -708,5 +709,12 @@ namespace JSF.Database
         public Vector2Int[] AimedPos;
         public RotationDirection LastDir;
         public Snapshot Snapshot;
+    }
+
+    [Serializable]
+    public struct Author
+    {
+        public string Name;
+        public Sprite Image;
     }
 }
