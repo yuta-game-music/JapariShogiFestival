@@ -67,6 +67,7 @@ namespace JSF.Database
                         Debug.LogWarning("not a friend!");
                     }
                 }
+                _static_db.friends.Sort((a, b) => a.FriendID - b.FriendID);
                 return _static_db;
             }
 #endif
@@ -104,6 +105,7 @@ namespace JSF.Database
                         Debug.LogWarning("not a friend!");
                     }
                 }
+                _static_db.friends.Sort((a, b) => a.FriendID - b.FriendID);
                 LoadingStatus = "“Ç‚İ‚İ‚ªŠ®—¹‚µ‚Ü‚µ‚½";
                 yield break;
             }
@@ -278,6 +280,7 @@ namespace JSF.Database
                     }
                 }
             }
+            _static_db.friends.Sort((a, b) => a.FriendID - b.FriendID);
             LoadingStatus = "“Ç‚İ‚İ‚ªŠ®—¹‚µ‚Ü‚µ‚½";
         }
 
@@ -295,6 +298,7 @@ namespace JSF.Database
                     return "Windows";
             }
         }
+
     }
 
     namespace NameList

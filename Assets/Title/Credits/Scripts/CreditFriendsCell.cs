@@ -27,8 +27,8 @@ namespace JSF.Title
             FriendsImage.sprite = f.ThumbImage;
 
             {
-                ImageAuthorText.text = "illust byÅF" + (string.IsNullOrEmpty(f.ImageAuthor.Name) ? "(ìΩñºäÛñ])" : f.ImageAuthor.Name);
-                if (f.ImageAuthor.Image == null)
+                ImageAuthorText.text = "illust byÅF\n" + (string.IsNullOrEmpty(f.ImageAuthor?.Name) ? "(ìΩñºäÛñ])" : f.ImageAuthor.Name);
+                if (f.ImageAuthor?.Image == null)
                 {
                     Destroy(ImageAuthorImage.gameObject);
                 }
@@ -38,8 +38,8 @@ namespace JSF.Title
                 }
             }
             {
-                TextAuthorText.text = "text byÅF" + (string.IsNullOrEmpty(f.TextAuthor.Name) ? "(ìΩñºäÛñ])" : f.TextAuthor.Name);
-                if (f.TextAuthor.Image == null)
+                TextAuthorText.text = "text byÅF\n" + (string.IsNullOrEmpty(f.TextAuthor?.Name) ? "(ìΩñºäÛñ])" : f.TextAuthor.Name);
+                if (f.TextAuthor?.Image == null)
                 {
                     Destroy(TextAuthorImage.gameObject);
                 }
@@ -49,8 +49,8 @@ namespace JSF.Title
                 }
             }
             {
-                BehaviourAuthorText.text = "behaviour byÅF" + (string.IsNullOrEmpty(f.BehaviourAuthor.Name) ? "(ìΩñºäÛñ])" : f.BehaviourAuthor.Name);
-                if (f.BehaviourAuthor.Image == null)
+                BehaviourAuthorText.text = "behaviour byÅF\n" + (string.IsNullOrEmpty(f.BehaviourAuthor?.Name) ? "(ìΩñºäÛñ])" : f.BehaviourAuthor.Name);
+                if (f.BehaviourAuthor?.Image == null)
                 {
                     Destroy(BehaviourAuthorImage.gameObject);
                 }

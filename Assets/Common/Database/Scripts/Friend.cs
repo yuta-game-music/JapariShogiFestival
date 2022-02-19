@@ -15,6 +15,11 @@ namespace JSF.Database
     [CreateAssetMenu(fileName = "Friend.asset", menuName = "JSF/Friends/FriendData")]
     public class Friend : ScriptableObject
     {
+        /// <summary>
+        /// ä«óùópID Ç±ÇÍÇ™é·Ç¢èáÇ…ï¿Ç‘
+        /// </summary>
+        public int FriendID = 0;
+
         public string FileName;
         public string Name;
         public IEnumerator MoveNormal(Vector2Int from, Vector2Int to, FriendOnBoard friendsOnBoard)
@@ -694,9 +699,9 @@ namespace JSF.Database
         public SkillMap[] Skills;
 
         #region Credit
-        public Author ImageAuthor;
-        public Author TextAuthor;
-        public Author BehaviourAuthor;
+        public AuthorData ImageAuthor;
+        public AuthorData TextAuthor;
+        public AuthorData BehaviourAuthor;
         #endregion
     }
 
@@ -709,12 +714,5 @@ namespace JSF.Database
         public Vector2Int[] AimedPos;
         public RotationDirection LastDir;
         public Snapshot Snapshot;
-    }
-
-    [Serializable]
-    public struct Author
-    {
-        public string Name;
-        public Sprite Image;
     }
 }
