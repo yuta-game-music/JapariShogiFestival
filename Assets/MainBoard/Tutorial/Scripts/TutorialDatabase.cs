@@ -53,37 +53,39 @@ namespace JSF.Game.Tutorial
                 Nodes = new TutorialNode[]
                 {
                     new TutorialNode(){
-                        Text="ようこそお祭りへ！私は案内役の[TODO]です、よろしくお願いします！\n\n\n<size=70%>クリックorタップで次に進みます。</size>"
+                        Text="ようこそお祭りへ！私は案内役のサーバルだよ、よろしくね！\n\n\n<size=70%>クリックorタップで次に進みます。</size>"
                     },
                     new TutorialNode(){
-                        Text="このお祭りは、フレンズ数人が2チームに分かれて狩りごっこで戦う団体戦です！"
+                        Text="このお祭りは、フレンズたちが2チームに分かれて狩りごっこで戦う団体戦なんだ！"
                     },
                     new TutorialNode(){
+                        Text="2チームが同じ場所でどったんばったん戦うよ！\n\nフレンズがどっちのチームにいるかは、フレンズの前にある枠の色で確認できるよ！",
+                        TextPosAnchor=new Vector2(0.3f,0.5f),
                         FocusedGameObjectName="GameBoard"
                     },
                     new TutorialNode(){
-                        Text="それぞれのチームにはリーダーがいます！リーダーはこのように濃い枠で囲まれています！",
+                        Text="それぞれのチームにはリーダーがいるよ！リーダーはこんなふうに濃い枠で囲まれているよ！",
                         FocusedCell=new Vector2Int[]{new Vector2Int(1,0) },
                         TextPosAnchor=new Vector2(0.3f,0.8f)
                     },
                     new TutorialNode(){
-                        Text="相手チームのリーダーを狩ると勝利です！",
+                        Text="相手チームのリーダーを狩ると勝利だよ！\n逆に自分のリーダーが狩られちゃうと負けちゃうんだ！",
                         FocusedCell=new Vector2Int[]{new Vector2Int(1,2) },
                         TextPosAnchor=new Vector2(0.3f,0.2f)
                     },
                     new TutorialNode()
                     {
-                        Text="このゲームでは交互にターンが回ってきます！"
+                        Text="このゲームでは交互にターンが回ってくるんだけど…"
                     },
                     new TutorialNode
                     {
-                        Text="1ターンの間に、フレンズを1人動かすことができます！試しにこのフレンズを動かしてみましょう！",
+                        Text="1ターンの間に、フレンズを1人動かすことができるよ！試しにこのフレンズに動いてもらおー！",
                         FocusedCell=new Vector2Int[]{new Vector2Int(0,0) },
                         TextPosAnchor=new Vector2(0.3f,0.8f)
                     },
                     new TutorialNode
                     {
-                        Text="動かすには、そのフレンズに触れてから行き先のマスに触れて下さい！\n\n<color=#808080>左下のフレンズを1つ上のマスに動かしてみましょう。</color>",
+                        Text="フレンズに指示を出すには、そのフレンズに触れてから行き先のマスに触れてね！\n\n<color=#808080>左下のフレンズを1つ上のマスに動かしてみましょう。</color>",
                         FocusedCell=new Vector2Int[] { new Vector2Int(0, 0), new Vector2Int(0,1) },
                         TextPosAnchor=new Vector2(0.3f,0.8f),
                         MovableFriendsId = new int[]{0},
@@ -105,7 +107,7 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="よくできました！\n\n次は相手のターンです、相手の出方を観察してみましょう。",
+                        Text="やったー！指示が伝わったよ！\n\n次は相手のターンだよ！相手の出方を見てみよー！",
                         TextPosAnchor=new Vector2(0.3f,0.8f),
                     },
                     new TutorialNode
@@ -127,12 +129,12 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="あっ！仲間が狩られてしまいました…でもこれで相手にスキができました！",
+                        Text="あっ！仲間が狩られちゃった…でもこれで相手にスキができたよ！",
                         TextPosAnchor=new Vector2(0.3f,0.8f),
                     },
                     new TutorialNode
                     {
-                        Text="このフレンズが相手のリーダーを狩れそうです！斜めに動いて狩ってみましょう！",
+                        Text="このフレンズが相手のリーダーを狩れそうだね！斜めに動いて狩ってみよー！\n\n<color=#808080>中央下のフレンズを左上のマスに動かしてみましょう。\nフレンズはドラッグでも動かせます。</color>",
 
                         FocusedCell=new Vector2Int[] { new Vector2Int(1, 0), new Vector2Int(0,1) },
                         TextPosAnchor=new Vector2(0.3f,0.8f),
@@ -155,11 +157,11 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="お見事です！これで相手のリーダーが狩れたので、私たちの勝利です！"
+                        Text="すっごーい！これで相手のリーダーが狩れたから、私たちの勝利だね！"
                     },
                     new TutorialNode
                     {
-                        Text="これで「移動」「狩る」の操作の説明は以上です。\n\n<color=#808080>クリックorタップでタイトル画面に戻ります。</color>"
+                        Text="これで「移動」「狩る」の操作の説明は終わりだよ！\n\n<color=#808080>クリックorタップでタイトル画面に戻ります。</color>"
                     }
                 }
             },
@@ -168,7 +170,7 @@ namespace JSF.Game.Tutorial
             // チュートリアル2 回転と特殊スキル
             new Tutorial()
             {
-                GuideIconID=1,
+                GuideIconID=0,
                 InitialBoardStatus = new BoardStatus()
                 {
                     Size=new Vector2Int(4,3),
@@ -225,7 +227,7 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="回転させるには、そのフレンズに<b>2回</b>触れてから\n向きたいほうにあるマスに触れてね！\n\n<color=#808080>リーダーのフレンズを右上向きにしてみましょう。</color>",
+                        Text="回転させるには、そのフレンズに<u><color=#800000>2回</color></u>触れてから\n向きたいほうにあるマスに触れてね！\n\n<color=#808080>リーダーのフレンズを右上向きにしてみましょう。</color>",
                         FocusedCell=new Vector2Int[] { new Vector2Int(1, 0), new Vector2Int(2,1) },
                         TextPosAnchor=new Vector2(0.3f,0.8f),
                         MovableFriendsId = new int[]{0},
@@ -250,7 +252,7 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="よくできました！はなまる！",
+                        Text="できたー！",
                         TextPosAnchor=new Vector2(0.3f,0.2f),
                     },
                     new TutorialNode
@@ -284,7 +286,7 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="サンドスターは1ターンに1つ増えるよ！\nあと、何も動かさずにサンドスターを追加で1つもらうこともできるよ！",
+                        Text="サンドスターは1ターンに1つ\n増えるよ！あと、ターン中に何も動かさないと\nサンドスターを追加で1つもらうこともできるよ！\n\n<size=70%>※各増加量は設定により変わります。</size>",
                         TextPosAnchor=new Vector2(0.3f,0.2f),
                     },
                     new TutorialNode
@@ -294,7 +296,7 @@ namespace JSF.Game.Tutorial
                     },
                     new TutorialNode
                     {
-                        Text="例えば、サーバルちゃんは大きくジャンプすることが得意だから、目の前のフレンズを飛び越えて行くことができるよ！",
+                        Text="例えば私、サーバルは大きくジャンプすることが得意だから、目の前のフレンズを飛び越えて行くことができるよ！",
                         FocusedCell = new Vector2Int[]{ new Vector2Int(1,0) },
                         TextPosAnchor=new Vector2(0.3f,0.8f),
                     },
