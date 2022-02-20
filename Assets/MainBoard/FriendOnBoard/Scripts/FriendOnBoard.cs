@@ -18,6 +18,10 @@ namespace JSF.Game
         public RectTransform SelfTF;
         public Image ImageViewer;
         public Image LeaderFrameViewer;
+
+        public Sprite LeaderFrame;
+        public Sprite NormalFrame;
+
         public Player.Player Possessor { get; private set; }
         public bool IsLeader { get; private set; }
         public Vector2Int? Pos { get => (!(Cell is LoungeCell)) ? (Cell?.SelfPos) : null; }
@@ -91,15 +95,16 @@ namespace JSF.Game
         {
             if (isLeader)
             {
-                SetFrameColor(Color.Lerp(color, Color.black, 0.2f));
+                SetFrame(true, Color.Lerp(color, Color.black, 0.2f));
             }
             else
             {
-                SetFrameColor(Color.Lerp(color, Color.white, 0.6f));
+                SetFrame(false,Color.Lerp(color, Color.white, 0.4f));
             }
         }
-        private void SetFrameColor(Color color)
+        private void SetFrame(bool isLeader, Color color)
         {
+            LeaderFrameViewer.sprite = isLeader ? LeaderFrame : NormalFrame;
             LeaderFrameViewer.color = color;
         }
         public void Rotate(RotationDirection diff)

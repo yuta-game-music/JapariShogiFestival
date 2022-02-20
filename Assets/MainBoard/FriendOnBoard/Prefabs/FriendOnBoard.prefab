@@ -512,8 +512,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Friend: {fileID: 0}
   ViewerTF: {fileID: 7008290763471616557}
+  SelfTF: {fileID: 9217954520308336845}
   ImageViewer: {fileID: 3822664296238634383}
   LeaderFrameViewer: {fileID: 5971836104806808882}
+  LeaderFrame: {fileID: 21300000, guid: 551bd86b47a78b24091b981716dc57ff, type: 3}
+  NormalFrame: {fileID: 21300000, guid: c4fc03b62eadd5c4bbfff3bb1cb639c0, type: 3}
 --- !u!95 &9217954520308336842
 Animator:
   serializedVersion: 3
