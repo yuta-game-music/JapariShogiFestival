@@ -48,8 +48,10 @@ MonoBehaviour:
   StartClip: {fileID: 8300000, guid: 4f86879e088021748be28b478ccc29ff, type: 3}
   ErrorClip: {fileID: 8300000, guid: ad21a87839a6e274b977a349e656d38b, type: 3}
   SkillCutInClip: {fileID: 8300000, guid: 0b57c25b3d258b341996c0f8f9c2b6d0, type: 3}
+  SkipTurnClip: {fileID: 8300000, guid: e0bbaf73ffba08f48a9299e9db3a05a4, type: 3}
   PlaceFriendClip: {fileID: 8300000, guid: dffe48c7b9772374ea0127038ec92fb7, type: 3}
   MoveToLoungeClip: {fileID: 8300000, guid: a16ccc2f123ed874fae64bbdf5a5c4c2, type: 3}
+  FinishClip: {fileID: 8300000, guid: 0d736eee6f3de604f845496da5fb0874, type: 3}
 --- !u!1 &8983805647736297333
 GameObject:
   m_ObjectHideFlags: 0
