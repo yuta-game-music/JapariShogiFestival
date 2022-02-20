@@ -465,7 +465,7 @@ namespace JSF.Game
             if (turnPass)
             {
                 // SEçƒê∂
-                Util.PlaySE(SE.SEType.Error);
+                Util.PlaySE(SE.SEType.SkipTurn);
                 yield return new WaitForSeconds(0.5f);
                 yield return OnTurnPass();
             }
@@ -528,6 +528,7 @@ namespace JSF.Game
             if (DoesAnyoneWin(out Player.Player Winner))
             {
                 Debug.Log("Winner: " + Winner);
+                Util.PlaySE(SE.SEType.Finish);
                 yield return GameUI.PlayFinish(Winner);
                 GlobalVariable.Winner = Winner?.PlayerInfo;
                 if (GlobalVariable.Tutorial == null)
