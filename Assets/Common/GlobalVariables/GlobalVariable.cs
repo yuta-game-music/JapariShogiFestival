@@ -49,13 +49,7 @@ namespace JSF
                 PlayerType=PlayerType.User,
                 PlayerColor=Color.magenta,
                 Friends=null,
-                CPUStrategy=new CPUStrategy(){
-                    Overall=CPUStrategyOverall.TryLoungeHalf,
-                    Defense=CPUStrategyDefense.AlwaysEscape,
-                    DefenseFor=CPUStrategyDefenseFor.LeaderOnly,
-                    Move=CPUStrategyMove.RandomExceptMinus,
-                    Select=CPUStrategySelect.Random
-                }
+                CPUDifficulty=CPUDifficulty.Easy,
             },
             new PlayerInfo(){
                 ID=1,
@@ -63,13 +57,7 @@ namespace JSF
                 PlayerType=PlayerType.User,
                 PlayerColor=Color.magenta,
                 Friends=null,
-                CPUStrategy=new CPUStrategy(){
-                    Overall=CPUStrategyOverall.TryLoungeHalf,
-                    Defense=CPUStrategyDefense.AlwaysEscape,
-                    DefenseFor=CPUStrategyDefenseFor.LeaderOnly,
-                    Move=CPUStrategyMove.RandomExceptMinus,
-                    Select=CPUStrategySelect.Random
-                }
+                CPUDifficulty=CPUDifficulty.Easy,
             },
         };
         #endregion
@@ -93,7 +81,10 @@ namespace JSF
         public RotationDirection Direction;
         public Friend Leader { get => (Friends!=null && Friends.Length>0) ? Friends[0] : null; }
         public Friend[] Friends;
+
         public CPUStrategy CPUStrategy;
+        private CPUDifficulty _cpu_difficulty;
+        public CPUDifficulty CPUDifficulty { get => _cpu_difficulty; set => SetCPUDifficulty(value); }
 
         public bool Equals(PlayerInfo x, PlayerInfo y)
         {
@@ -103,6 +94,31 @@ namespace JSF
         public int GetHashCode(PlayerInfo obj)
         {
             return obj.ID;
+        }
+
+        private void SetCPUDifficulty(CPUDifficulty diff)
+        {
+            _cpu_difficulty = diff;
+            switch (_cpu_difficulty)
+            {
+                case CPUDifficulty.Easy:
+                    CPUStrategy.Overall = CPUStrategyOverall.MoveOnly100;
+                    CPUStrategy.Defense = CPUStrategyDefense.None;
+                    CPUStrategy.DefenseFor = CPUStrategyDefenseFor.LeaderOnly;
+                    CPUStrategy.Select = CPUStrategySelect.Random;
+                    CPUStrategy.Move = CPUStrategyMove.Random;
+                    break;
+                case CPUDifficulty.Normal:
+                    CPUStrategy.Overall = CPUStrategyOverall.TryLounge50;
+                    CPUStrategy.Defense = CPUStrategyDefense.AlwaysEscape;
+                    CPUStrategy.DefenseFor = CPUStrategyDefenseFor.All;
+                    CPUStrategy.Select = CPUStrategySelect.Backline;
+                    CPUStrategy.Move = CPUStrategyMove.ApproachToLeader;
+                    break;
+                case CPUDifficulty.Hard:
+                    CPUStrategy.Overall = CPUStrategyOverall.BestEvaluation;
+                    break;
+            }
         }
     }
 

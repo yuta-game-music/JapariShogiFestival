@@ -14,6 +14,8 @@ namespace JSF.Common.UI
 
         public Image Image;
         public AudioClip ClickSound;
+
+        public bool CanInteract = true;
         public void SetAllColor(Color NormalColor)
         {
             this.NormalColor = NormalColor;
@@ -21,23 +23,29 @@ namespace JSF.Common.UI
             this.ClickedColor = Color.Lerp(NormalColor, Color.red, 0.2f);
         }
         public abstract void OnClick();
-        public void OnPointerClick(PointerEventData eventData)
+        public virtual void OnPointerClick(PointerEventData eventData)
         {
-            Image.color = ClickedColor;
-            Util.PlaySE(ClickSound);
-            OnClick();
+            if (CanInteract)
+            {
+                Image.color = ClickedColor;
+                Util.PlaySE(ClickSound);
+                OnClick();
+            }
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        public virtual void OnPointerEnter(PointerEventData eventData)
         {
-            Image.color = HoveredColor;
+            if (CanInteract)
+            {
+                Image.color = HoveredColor;
+            }
         }
 
-        public void OnPointerExit(PointerEventData eventData)
+        public virtual void OnPointerExit(PointerEventData eventData)
         {
             Image.color = NormalColor;
         }
-        public void Start()
+        public virtual void Start()
         {
             Image.color = NormalColor;
         }

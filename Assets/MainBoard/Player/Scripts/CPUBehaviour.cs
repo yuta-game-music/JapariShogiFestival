@@ -112,11 +112,13 @@ namespace JSF.Game.CPU
                     int max_aimed_by_count = 0;
                     foreach(var fob in our_friends)
                     {
-                        var _cnt = opponent_movable_pos[fob.Pos.Value].Count;
-                        if (_cnt > max_aimed_by_count)
-                        {
-                            defendee = fob;
-                            max_aimed_by_count = _cnt;
+                        if(opponent_movable_pos.TryGetValue(fob.Pos.Value, out var set)){
+                            var _cnt = set.Count;
+                            if (_cnt > max_aimed_by_count)
+                            {
+                                defendee = fob;
+                                max_aimed_by_count = _cnt;
+                            }
                         }
                     }
                 }
@@ -811,4 +813,11 @@ namespace JSF.Game.CPU
         ApproachToLeader, // 相手のリーダーに最も近づく行動をする
     }
 
+
+    public enum CPUDifficulty
+    {
+        Easy, // Overall=MoveOnly100, Defense=None, DefenseFor=LeaderOnly, Select=Random, Move=Random
+        Normal, // Overall=TryLounge50, Defense=AlwaysEscape, DefenseFor=All, Select=Backline, Move=ApproachToLeader
+        Hard, // Overall=BestEvaluation
+    }
 }

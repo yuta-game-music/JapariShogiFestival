@@ -24,14 +24,25 @@ namespace JSF.Common.PlayerView
         public GameObject PlayerNameEditor;
         public GameObject PlayerNameViewer;
         public TMPro.TMP_Text PlayerNameText;
-        public TMPro.TMP_Text LeaderMessageText;
         public TMPro.TMP_Text PlayerTypeText;
+
+        #region LeaderRight
+        public GameObject LeaderMessageObject;
+        public TMPro.TMP_Text LeaderMessageText;
+
+        public GameObject CPUDifficultySelectorObject;
+        #endregion
 
         private bool _init = false;
 
         // Start is called before the first frame update
         void Start()
         {
+            var cpu_difficulty_select_buttons = GetComponentsInChildren<CPUDifficultySelectButton>();
+            foreach(var button in cpu_difficulty_select_buttons)
+            {
+                button.PlayerID = PlayerInfo?.ID ?? -1;
+            }
         }
 
         // Update is called once per frame
@@ -56,18 +67,27 @@ namespace JSF.Common.PlayerView
                 var playerInfo = PlayerInfo.Value;
                 BackgroundImage.color = Color.Lerp(playerInfo.PlayerColor, Color.white, 0.8f);
 
+                var CPUDifficultySelectButtons = GetComponentsInChildren<CPUDifficultySelectButton>();
                 // モードによってプレイヤー名が編集可能かどうかが変わる
                 switch (Situation)
                 {
                     case Situation.Setting:
-                        // プレイヤー名が編集可能なシーン
+                        // 編集可能なシーン
                         PlayerNameEditor.SetActive(true);
                         PlayerNameViewer.SetActive(false);
+                        foreach(var CPUDifficultySelectButton in CPUDifficultySelectButtons)
+                        {
+                            CPUDifficultySelectButton.CanInteract = true;
+                        }
                         break;
                     case Situation.Result:
-                        // プレイヤー名が編集不可なシーン
+                        // 編集不可なシーン
                         PlayerNameEditor.SetActive(false);
                         PlayerNameViewer.SetActive(true);
+                        foreach (var CPUDifficultySelectButton in CPUDifficultySelectButtons)
+                        {
+                            CPUDifficultySelectButton.CanInteract = false;
+                        }
                         break;
                 }
 
@@ -148,16 +168,47 @@ namespace JSF.Common.PlayerView
                         Debug.LogWarning("Unknown Situation: "+Situation);
                         break;
                 }
-                string Message;
-                if (Messages == null || Messages.Length == 0)
+
+                switch (playerInfo.PlayerType)
                 {
-                    Message = "";
+                    case Game.Player.PlayerType.User:
+                        {
+                            PlayerTypeText.text = "";
+
+                            LeaderMessageObject.SetActive(true);
+                            string Message;
+                            if (Messages == null || Messages.Length == 0)
+                            {
+                                Message = "";
+                            }
+                            else
+                            {
+                                Message = Messages[Random.Range(0, Messages.Length)];
+                            }
+                            LeaderMessageText.text = Message;
+
+                            CPUDifficultySelectorObject.SetActive(false);
+                        }
+                        break;
+                    case Game.Player.PlayerType.CPU:
+                        {
+                            PlayerTypeText.text = "[CPU]";
+
+                            LeaderMessageObject.SetActive(false);
+
+                            CPUDifficultySelectorObject.SetActive(true);
+                        }
+                        break;
+                    case Game.Player.PlayerType.Cellien:
+                        {
+                            PlayerTypeText.text = "[Cellien]";
+
+                            LeaderMessageObject.SetActive(false);
+
+                            CPUDifficultySelectorObject.SetActive(false);
+                        }
+                        break;
                 }
-                else
-                {
-                    Message = Messages[Random.Range(0, Messages.Length)];
-                }
-                LeaderMessageText.text = Message;
 
                 _init = true;
             }
