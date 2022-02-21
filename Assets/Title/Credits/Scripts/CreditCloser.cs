@@ -11,6 +11,7 @@ namespace JSF.Title
         public TitlePageController Controller;
         public void OnPointerClick(PointerEventData eventData)
         {
+            Common.Util.PlaySE(SE.SEType.Back);
             StartCoroutine(Controller.SetCreditPageVisible(false));
         }
 
