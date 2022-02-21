@@ -59,12 +59,12 @@ namespace JSF.Game.Tutorial
                         Text="このお祭りは、フレンズたちが2チームに分かれて狩りごっこで戦う団体戦なんだ！"
                     },
                     new TutorialNode(){
-                        Text="2チームが同じ場所でどったんばったん戦うよ！\n\nフレンズがどっちのチームにいるかは、フレンズの前にある枠の色で確認できるよ！",
+                        Text="2チームが同じ場所でどったんばったん戦うよ！\n\nフレンズがどっちのチームにいるかは、フレンズの周りにある枠の色で確認できるよ！",
                         TextPosAnchor=new Vector2(0.3f,0.5f),
                         FocusedGameObjectName="GameBoard"
                     },
                     new TutorialNode(){
-                        Text="それぞれのチームにはリーダーがいるよ！リーダーはこんなふうに濃い枠で囲まれているよ！",
+                        Text="それぞれのチームにはリーダーがいるよ！リーダーはこんなふうに★マークが付いているよ！",
                         FocusedCell=new Vector2Int[]{new Vector2Int(1,0) },
                         TextPosAnchor=new Vector2(0.3f,0.8f)
                     },
