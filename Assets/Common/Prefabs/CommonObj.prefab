@@ -52,6 +52,7 @@ MonoBehaviour:
   PlaceFriendClip: {fileID: 8300000, guid: dffe48c7b9772374ea0127038ec92fb7, type: 3}
   MoveToLoungeClip: {fileID: 8300000, guid: a16ccc2f123ed874fae64bbdf5a5c4c2, type: 3}
   FinishClip: {fileID: 8300000, guid: 0d736eee6f3de604f845496da5fb0874, type: 3}
+  BackClip: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
 --- !u!1 &8983805647736297333
 GameObject:
   m_ObjectHideFlags: 0
