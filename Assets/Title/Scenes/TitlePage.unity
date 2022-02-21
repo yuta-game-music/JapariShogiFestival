@@ -1107,6 +1107,7 @@ MonoBehaviour:
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 636732162}
   ClickSound: {fileID: 8300000, guid: 4f86879e088021748be28b478ccc29ff, type: 3}
+  CanInteract: 1
   Controller: {fileID: 1452470661}
   TutorialID: 1
 --- !u!114 &636732162
@@ -1537,6 +1538,7 @@ MonoBehaviour:
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 900681883}
   ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
+  CanInteract: 1
   Controller: {fileID: 1452470661}
 --- !u!1 &981250521
 GameObject:
@@ -2554,6 +2556,7 @@ MonoBehaviour:
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 1689213675}
   ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
+  CanInteract: 1
   Controller: {fileID: 1452470661}
 --- !u!114 &1689213675
 MonoBehaviour:
@@ -3493,6 +3496,7 @@ MonoBehaviour:
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 2003288437}
   ClickSound: {fileID: 8300000, guid: 4f86879e088021748be28b478ccc29ff, type: 3}
+  CanInteract: 1
   Controller: {fileID: 1452470661}
   TutorialID: 0
 --- !u!114 &2003288437
@@ -3589,6 +3593,7 @@ MonoBehaviour:
   ClickedColor: {r: 1, g: 0.7, b: 0.7, a: 1}
   Image: {fileID: 2076953147}
   ClickSound: {fileID: 8300000, guid: bb0a5b08d6190824881bc4ae0079ddb1, type: 3}
+  CanInteract: 1
   Controller: {fileID: 1452470661}
 --- !u!114 &2076953147
 MonoBehaviour:
@@ -3679,7 +3684,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8584906, g: 0.6781079, b: 0.46569067, a: 1}
+  m_Color: {r: 1, g: 0.7758347, b: 0.5613208, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3687,10 +3692,10 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
-  m_FillMethod: 4
+  m_FillMethod: 0
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
