@@ -16,6 +16,7 @@ namespace JSF.Game
         public Animator Animator { get; private set; }
         public RectTransform ViewerTF;
         public RectTransform SelfTF;
+        public Image BackgroundViewer;
         public Image ImageViewer;
         public Image LeaderFrameViewer;
 
@@ -106,6 +107,7 @@ namespace JSF.Game
         {
             LeaderFrameViewer.sprite = isLeader ? LeaderFrame : NormalFrame;
             LeaderFrameViewer.color = color;
+            BackgroundViewer.color = color;
         }
         public void Rotate(RotationDirection diff)
         {
