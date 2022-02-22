@@ -9,7 +9,7 @@ namespace JSF.SettingPage.Detail
         public IntValue Value;
         public override string CurrentValueToString()
         {
-            return $"{CurrentValue}<size=70%> / {MaxValue} </size>";
+            return $"{CurrentValue}<size=70%><color=#a0a0a0> / {MaxValue} </color></size>";
         }
 
         public int CurrentValue { get => GetValue(); set => SetValue(value); }
